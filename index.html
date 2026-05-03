@@ -218,7 +218,7 @@
 
   <div class="ui" id="gameUI" style="display: none;">
     <div class="score-box">
-      <div class="score">🏆 <span id="score">0</span></div>
+      <div class="score"> <span id="score">0</span></div>
       <div class="coins">💰 <span id="coins">0</span> (всего: <span id="totalCoins">0</span>)</div>
     </div>
     <div class="controls">
@@ -238,7 +238,7 @@
   <div class="pause-menu" id="pauseMenu">
     <h2 style="font-size: 2rem; margin-bottom: 10px;">⏸ Пауза</h2>
     <button class="btn btn-primary" id="resumeBtn">▶ Продолжить</button>
-    <button class="btn btn-secondary" id="menuBtn">🏠 В меню</button>
+    <button class="btn btn-secondary" id="menuBtn"> В меню</button>
   </div>
 
   <div class="overlay" id="gameOverScreen">
@@ -295,7 +295,7 @@
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <script>
     // ============================================
-    // === AUDIO SYSTEM - FIXED
+    // === AUDIO SYSTEM
     // ============================================
     class AudioSystem {
       constructor() {
@@ -315,20 +315,25 @@
         if (!this.ctx) {
           try {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('AudioContext created');
+            console.log('✅ AudioContext created');
           } catch (e) {
-            console.error('Audio init failed:', e);
+            console.error('❌ Audio init failed:', e);
           }
         }
+        return this.ctx !== null;
       }
       
       playMenuMusic() {
-        if (!this.musicEnabled || !this.ctx || !this.enabled) return;
+        if (!this.musicEnabled || !this.ctx || !this.enabled) {
+          console.log('Menu music skipped:', { musicEnabled: this.musicEnabled, hasCtx: !!this.ctx, enabled: this.enabled });
+          return;
+        }
         this.isMenuMusic = true;
         this.noteIndex = 0;
+        console.log(' Starting menu music');
         
         const playNote = () => {
-          if (!this.isMenuMusic || !this.musicEnabled || !this.enabled) return;
+          if (!this.isMenuMusic || !this.musicEnabled || !this.enabled || !this.ctx) return;
           
           const freq = this.menuNotes[this.noteIndex];
           if (freq > 0) {
@@ -349,16 +354,16 @@
         
         playNote();
         this.musicInterval = setInterval(playNote, 500);
-        console.log('Menu music started');
       }
       
       playGameMusic() {
         if (!this.musicEnabled || !this.ctx || !this.enabled) return;
         this.isMenuMusic = false;
         this.noteIndex = 0;
+        console.log('🎵 Starting game music');
         
         const playNote = () => {
-          if (this.isMenuMusic || !this.musicEnabled || !this.enabled) return;
+          if (this.isMenuMusic || !this.musicEnabled || !this.enabled || !this.ctx) return;
           
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
@@ -376,7 +381,6 @@
         
         playNote();
         this.musicInterval = setInterval(playNote, 400);
-        console.log('Game music started');
       }
       
       stopMusic() {
@@ -554,13 +558,17 @@
 
     let assetsLoaded = 0;
     const totalAssets = 4;
+    let spriteDebugInfo = '';
 
     function loadAsset(name, src) {
       assets[name].onload = () => {
         assetsLoaded++;
-        console.log(`✅ ${name} loaded`);
+        spriteDebugInfo += `✅ ${name}: ${assets[name].naturalWidth}x${assets[name].naturalHeight}\n`;
+        console.log(`✅ ${name} loaded: ${assets[name].naturalWidth}x${assets[name].naturalHeight}`);
         if (assetsLoaded === totalAssets) {
           document.getElementById('loadingScreen').classList.remove('active');
+          console.log('All assets loaded!');
+          console.log('Sprite info:', spriteDebugInfo);
         }
       };
       assets[name].onerror = () => {
@@ -579,7 +587,7 @@
     loadAsset('coin', 'assets/coin.png');
 
     // ============================================
-    // === ANIMATION
+    // === ANIMATION - FIXED
     // ============================================
     class Animator {
       constructor(spriteSheet, frameW, frameH, frameCount, fps = 10) {
@@ -602,23 +610,40 @@
       }
       
       draw(ctx, x, y, w, h) {
-        if (this.spriteSheet.complete && this.spriteSheet.naturalWidth > 0) {
-          ctx.drawImage(
-            this.spriteSheet,
-            this.frame * this.frameW, 0, this.frameW, this.frameH,
-            x, y, w, h
-          );
-        } else {
-          // Fallback animated character
-          const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'];
-          ctx.fillStyle = colors[Math.floor(Date.now() / 300) % colors.length];
-          ctx.fillRect(x, y, w, h);
-          // Face
-          ctx.fillStyle = 'white';
-          ctx.fillRect(x + w * 0.6, y + h * 0.2, w * 0.2, h * 0.2);
-          ctx.fillStyle = 'black';
-          ctx.fillRect(x + w * 0.65, y + h * 0.25, w * 0.1, h * 0.1);
+        // DEBUG: показываем инфо о спрайте в консоли при первом кадре
+        if (this.frame === 0 && this.spriteSheet.complete) {
+          console.log(`Drawing ${this.spriteSheet.src.split('/').pop()}: frame=${this.frame}, size=${this.spriteSheet.naturalWidth}x${this.spriteSheet.naturalHeight}, crop=${this.frameW}x${this.frameH}`);
         }
+        
+        if (this.spriteSheet.complete && this.spriteSheet.naturalWidth > 0) {
+          const sx = this.frame * this.frameW;
+          
+          // Проверяем, не выходим ли за границы спрайта
+          if (sx + this.frameW <= this.spriteSheet.naturalWidth) {
+            ctx.drawImage(
+              this.spriteSheet,
+              sx, 0, this.frameW, this.frameH,
+              x, y, w, h
+            );
+          } else {
+            console.warn(`Frame ${this.frame} out of bounds! sx=${sx}, sheetWidth=${this.spriteSheet.naturalWidth}`);
+            // Рисуем fallback
+            this.drawFallback(ctx, x, y, w, h);
+          }
+        } else {
+          this.drawFallback(ctx, x, y, w, h);
+        }
+      }
+      
+      drawFallback(ctx, x, y, w, h) {
+        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'];
+        ctx.fillStyle = colors[Math.floor(Date.now() / 300) % colors.length];
+        ctx.fillRect(x, y, w, h);
+        // Face
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x + w * 0.6, y + h * 0.2, w * 0.2, h * 0.2);
+        ctx.fillStyle = 'black';
+        ctx.fillRect(x + w * 0.65, y + h * 0.25, w * 0.1, h * 0.1);
       }
       
       reset() {
@@ -627,6 +652,7 @@
       }
     }
 
+    // FIXED: Правильные размеры кадров
     const runAnim = new Animator(assets.playerRun, 64, 64, 8, 10);
     const jumpAnim = new Animator(assets.playerJump, 64, 64, 2, 6);
 
@@ -644,15 +670,15 @@
     let animId;
 
     // ============================================
-    // === BACKGROUND - FIXED
+    // === BACKGROUND - SMOOTHED
     // ============================================
-    let bgOffset1 = 0, bgOffset2 = 0, bgOffset3 = 0;
+    let bgOffset1 = 0, bgOffset2 = 0;
     
     function drawBackground() {
       // Clear canvas
       ctx.clearRect(0, 0, W, H);
       
-      // Sky - dark gradient
+      // Sky - smooth gradient
       const skyGrad = ctx.createLinearGradient(0, 0, 0, floorY);
       skyGrad.addColorStop(0, '#0f0c29');
       skyGrad.addColorStop(0.5, '#302b63');
@@ -671,28 +697,29 @@
       }
       ctx.globalAlpha = 1;
       
-      // Mountains (far)
+      // Mountains (far) - SMOOTHED with smaller step
       bgOffset1 -= gameSpeed * 0.15;
       if (bgOffset1 <= -W) bgOffset1 = 0;
       
       ctx.fillStyle = '#1a1a2e';
       ctx.beginPath();
       ctx.moveTo(0, floorY);
-      for (let x = 0; x <= W; x += 3) {
+      // FIXED: шаг 1px для плавности
+      for (let x = 0; x <= W; x += 1) {
         const y = floorY - 50 - Math.abs(Math.sin((x + bgOffset1) * 0.008)) * 100;
         ctx.lineTo(x, y);
       }
       ctx.lineTo(W, floorY);
       ctx.fill();
       
-      // Hills (middle)
+      // Hills (middle) - SMOOTHED
       bgOffset2 -= gameSpeed * 0.4;
       if (bgOffset2 <= -W) bgOffset2 = 0;
       
       ctx.fillStyle = '#2d5a3d';
       ctx.beginPath();
       ctx.moveTo(0, floorY);
-      for (let x = 0; x <= W; x += 3) {
+      for (let x = 0; x <= W; x += 1) {
         const y = floorY - 25 - Math.abs(Math.sin((x + bgOffset2) * 0.012)) * 50;
         ctx.lineTo(x, y);
       }
@@ -706,6 +733,13 @@
       // Grass top
       ctx.fillStyle = '#4a9a4a';
       ctx.fillRect(0, floorY, W, 8);
+      
+      // Grass details
+      ctx.fillStyle = '#3d8a3d';
+      for (let x = 0; x < W; x += 15) {
+        const h = 5 + Math.sin(x * 0.1 + Date.now() * 0.001) * 3;
+        ctx.fillRect(x, floorY - h, 2, h);
+      }
     }
 
     // ============================================
@@ -887,6 +921,7 @@
         }
       });
 
+      // FIXED: Убрал debug mode
       if (player.grounded) {
         runAnim.draw(ctx, player.x, player.y, player.w, player.h);
       } else {
@@ -912,11 +947,13 @@
     }
 
     // ============================================
-    // === GAME CONTROL - FIXED AUDIO
+    // === GAME CONTROL - FIXED AUDIO & UI
     // ============================================
     function startGame() {
-      // Initialize audio on first user interaction
-      audio.init();
+      // FIXED: Инициализация аудио
+      if (!audio.ctx) {
+        audio.init();
+      }
       audio.stopMusic();
       audio.playGameMusic();
       
@@ -936,6 +973,8 @@
       
       lastTime = performance.now();
       loop(lastTime);
+      
+      console.log('🎮 Game started');
     }
 
     function pauseGame() {
@@ -966,9 +1005,9 @@
       document.getElementById('gameUI').style.display = 'none';
       document.getElementById('mainMenu').classList.add('active');
       
-      // Start menu music
+      // FIXED: Запуск музыки в меню
       setTimeout(() => {
-        audio.init();
+        if (!audio.ctx) audio.init();
         audio.playMenuMusic();
       }, 100);
     }
@@ -1025,7 +1064,7 @@
     // ============================================
     function updateSoundButton() {
       const btn = document.getElementById('soundBtn');
-      btn.textContent = audio.enabled ? '🔊' : '🔇';
+      btn.textContent = audio.enabled ? '🔊' : '';
       btn.classList.toggle('muted', !audio.enabled);
     }
 
@@ -1100,20 +1139,28 @@
     });
 
     // ============================================
-    // === INIT
+    // === INIT - FIXED MENU MUSIC
     // ============================================
     document.getElementById('highScore').textContent = highScore;
     document.getElementById('totalCoins').textContent = totalCoins;
     updateSoundButton();
     
-    // Start menu music on first click anywhere
-    document.addEventListener('click', function initAudioOnFirstClick() {
+    // FIXED: Музыка в меню запускается сразу после первого клика
+    let audioInitialized = false;
+    function initAudioAndMusic() {
+      if (audioInitialized) return;
+      audioInitialized = true;
+      
       audio.init();
       audio.playMenuMusic();
-      document.removeEventListener('click', initAudioOnFirstClick);
-    }, { once: true });
+      console.log('🎵 Menu music initialized');
+    }
     
-    console.log('Game initialized!');
+    // Запускаем музыку при любом клике на странице
+    document.addEventListener('click', initAudioAndMusic, { once: true });
+    document.addEventListener('touchstart', initAudioAndMusic, { once: true });
+    
+    console.log('Game initialized! Waiting for first click to start music...');
   </script>
 </body>
 </html>
