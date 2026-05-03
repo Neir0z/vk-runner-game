@@ -301,8 +301,12 @@
     };
 
     function openShop() {
-      document.getElementById('shopCoins').textContent = totalCoins;
-      const grid = document.getElementById('shopGrid'); grid.innerHTML = '';
+      const shopCoinsEl = document.getElementById('shopCoins');
+      const shopGridEl = document.getElementById('shopGrid');
+      if (!shopCoinsEl || !shopGridEl) return;
+      
+      shopCoinsEl.textContent = totalCoins;
+      shopGridEl.innerHTML = '';
       
       Object.keys(skins).forEach(id => {
         const skin = skins[id]; const owned = ownedSkins.includes(id); const selected = selectedSkin === id;
@@ -310,10 +314,10 @@
         item.innerHTML = `<div class="shop-item-icon" style="background:${skin.color};border-radius:8px"></div><div class="shop-item-name">${skin.name}</div><div class="shop-item-price">${owned ? (selected ? 'Выбрано ✓' : 'Куплено') : skin.price+' 💰'}</div>`;
         item.onclick = () => {
           if(owned) { selectedSkin = id; localStorage.setItem('vk_runner_selected_skin', id); openShop(); audio.playClick(); }
-          else if(totalCoins >= skin.price) { totalCoins -= skin.price; ownedSkins.push(id); selectedSkin = id; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', id); document.getElementById('shopCoins').textContent = totalCoins; openShop(); audio.playCoin(); }
+          else if(totalCoins >= skin.price) { totalCoins -= skin.price; ownedSkins.push(id); selectedSkin = id; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', id); shopCoinsEl.textContent = totalCoins; openShop(); audio.playCoin(); }
           else audio.playCrash();
         };
-        grid.appendChild(item);
+        shopGridEl.appendChild(item);
       });
       
       Object.keys(shopItems).forEach(id => {
@@ -333,14 +337,15 @@
               totalCoins += amount;
             }
             localStorage.setItem('vk_runner_coins', totalCoins);
-            document.getElementById('shopCoins').textContent = totalCoins;
+            shopCoinsEl.textContent = totalCoins;
             audio.playCoin();
           } else audio.playCrash();
         };
-        grid.appendChild(el);
+        shopGridEl.appendChild(el);
       });
       
-      document.getElementById('shopScreen').classList.add('active');
+      const shopScreen = document.getElementById('shopScreen');
+      if (shopScreen) shopScreen.classList.add('active');
     }
 
     // ============================================
@@ -370,7 +375,9 @@
     }
 
     function openMissions() {
-      const list = document.getElementById('missionsList'); list.innerHTML = '';
+      const missionsListEl = document.getElementById('missionsList');
+      if (!missionsListEl) return;
+      missionsListEl.innerHTML = '';
       missions.forEach(m => {
         const item = document.createElement('div'); item.className = 'mission-item';
         item.innerHTML = `<div class="mission-info"><div class="mission-title">${m.icon} ${m.name}</div><div class="mission-progress">${m.current} / ${m.target}</div></div>`;
@@ -378,9 +385,10 @@
         if(m.claimed && !m.rewardClaimed) {
           btn.onclick = () => { totalCoins += m.reward; m.rewardClaimed = true; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_missions', JSON.stringify(missions)); openMissions(); audio.playCoin(); };
         } else if(m.rewardClaimed) { btn.textContent = 'Получено ✓'; btn.disabled = true; } else btn.disabled = true;
-        item.appendChild(btn); list.appendChild(item);
+        item.appendChild(btn); missionsListEl.appendChild(item);
       });
-      document.getElementById('missionsScreen').classList.add('active');
+      const missionsScreen = document.getElementById('missionsScreen');
+      if (missionsScreen) missionsScreen.classList.add('active');
     }
 
     // ============================================
@@ -667,7 +675,10 @@
         if (checkCollision(player, c)) {
           const val = player.doubleScore ? 2 : 1; runCoins += val; totalCoins += val;
           localStorage.setItem('vk_runner_coins', totalCoins);
-          document.getElementById('coins').textContent = runCoins; document.getElementById('totalCoins').textContent = totalCoins;
+          const coinsEl = document.getElementById('coins');
+          const totalCoinsEl = document.getElementById('totalCoins');
+          if (coinsEl) coinsEl.textContent = runCoins;
+          if (totalCoinsEl) totalCoinsEl.textContent = totalCoins;
           audio.playCoin(); createParticles(c.x+c.w/2, c.y+c.h/2, 10, '#f1c40f'); coins.splice(i, 1); updateMission('collect_coins', 1);
         }
       }
@@ -684,7 +695,8 @@
       score += player.doubleScore ? 0.2 : 0.1;
       // Плавное ускорение без уровней
       gameSpeed = 5 + Math.floor(score / 150) * 0.3;
-      document.getElementById('score').textContent = Math.floor(score);
+      const scoreEl = document.getElementById('score');
+      if (scoreEl) scoreEl.textContent = Math.floor(score);
       updateMission('run_distance', 0.1);
       
       if (screenShake > 0) { screenShake *= 0.9; if (screenShake < 0.5) screenShake = 0; }
@@ -750,56 +762,110 @@
       audio.stopMusic(); audio.playGameMusic();
       resetGame();
       isPlaying = true; isPaused = false; isGameOver = false;
-      document.getElementById('mainMenu').classList.remove('active');
-      document.getElementById('gameOverScreen').classList.remove('active');
-      document.getElementById('gameUI').style.display = 'flex';
-      document.getElementById('pauseMenu').classList.remove('active');
-      document.getElementById('powerupsDisplay').innerHTML = '';
-      document.getElementById('coins').textContent = '0';
-      document.getElementById('totalCoins').textContent = totalCoins;
+      
+      const mainMenu = document.getElementById('mainMenu');
+      const gameOverScreen = document.getElementById('gameOverScreen');
+      const gameUI = document.getElementById('gameUI');
+      const pauseMenu = document.getElementById('pauseMenu');
+      const powerupsDisplay = document.getElementById('powerupsDisplay');
+      const coinsEl = document.getElementById('coins');
+      const totalCoinsEl = document.getElementById('totalCoins');
+      
+      if (mainMenu) mainMenu.classList.remove('active');
+      if (gameOverScreen) gameOverScreen.classList.remove('active');
+      if (gameUI) gameUI.style.display = 'flex';
+      if (pauseMenu) pauseMenu.classList.remove('active');
+      if (powerupsDisplay) powerupsDisplay.innerHTML = '';
+      if (coinsEl) coinsEl.textContent = '0';
+      if (totalCoinsEl) totalCoinsEl.textContent = totalCoins;
+      
       updateSoundButton();
-      lastTime = performance.now(); loop(lastTime);
+      lastTime = performance.now(); 
+      loop(lastTime);
     }
 
-    function pauseGame() { isPaused = true; audio.stopMusic(); document.getElementById('pauseMenu').classList.add('active'); }
-    function resumeGame() { isPaused = false; if (audio.musicEnabled && audio.enabled) audio.playGameMusic(); document.getElementById('pauseMenu').classList.remove('active'); lastTime = performance.now(); }
+    function pauseGame() { 
+      isPaused = true; 
+      audio.stopMusic(); 
+      const pm = document.getElementById('pauseMenu'); 
+      if(pm) pm.classList.add('active'); 
+    }
+    
+    function resumeGame() { 
+      isPaused = false; 
+      if (audio.musicEnabled && audio.enabled) audio.playGameMusic(); 
+      const pm = document.getElementById('pauseMenu'); 
+      if(pm) pm.classList.remove('active'); 
+      lastTime = performance.now(); 
+    }
     
     function showRevive() {
-      document.getElementById('reviveContainer').style.display = 'block';
-      let t = 5; document.getElementById('reviveTimer').textContent = t;
-      reviveTimer = setInterval(() => { t--; document.getElementById('reviveTimer').textContent = t; if(t<=0) { clearInterval(reviveTimer); document.getElementById('reviveContainer').style.display = 'none'; } }, 1000);
+      const rc = document.getElementById('reviveContainer');
+      const rt = document.getElementById('reviveTimer');
+      if (!rc || !rt) return;
+      rc.style.display = 'block';
+      let t = 5; rt.textContent = t;
+      reviveTimer = setInterval(() => { t--; rt.textContent = t; if(t<=0) { clearInterval(reviveTimer); rc.style.display = 'none'; } }, 1000);
     }
 
     function revive() {
-      if (!canRevive) return; clearInterval(reviveTimer); document.getElementById('reviveContainer').style.display = 'none';
+      if (!canRevive) return; 
+      clearInterval(reviveTimer); 
+      const rc = document.getElementById('reviveContainer');
+      if(rc) rc.style.display = 'none';
       player.vy = 0; player.grounded = true; player.shield = true; player.x = W * 0.15;
       obstacles = obstacles.filter(o => o.x > W/2);
-      isGameOver = false; canRevive = false; moonMood = 0; audio.playPowerup(); activatePowerup('shield');
-      lastTime = performance.now(); loop(lastTime);
+      isGameOver = false; canRevive = false; moonMood = 0; 
+      audio.playPowerup(); 
+      activatePowerup('shield');
+      lastTime = performance.now(); 
+      loop(lastTime);
     }
 
     async function exitAndSave() {
-      isPlaying = false; isPaused = false; isGameOver = false; cancelAnimationFrame(animId); audio.stopMusic();
+      isPlaying = false; isPaused = false; isGameOver = false; 
+      cancelAnimationFrame(animId); 
+      audio.stopMusic();
       await saveToCloud(true);
-      document.getElementById('pauseMenu').classList.remove('active');
-      document.getElementById('gameOverScreen').classList.remove('active');
-      document.getElementById('gameUI').style.display = 'none';
-      document.getElementById('mainMenu').classList.add('active');
+      
+      const pauseMenu = document.getElementById('pauseMenu');
+      const gameOverScreen = document.getElementById('gameOverScreen');
+      const gameUI = document.getElementById('gameUI');
+      const mainMenu = document.getElementById('mainMenu');
+      
+      if (pauseMenu) pauseMenu.classList.remove('active');
+      if (gameOverScreen) gameOverScreen.classList.remove('active');
+      if (gameUI) gameUI.style.display = 'none';
+      if (mainMenu) mainMenu.classList.add('active');
+      
       setTimeout(() => { if (!audio.ctx) audio.init(); audio.playMenuMusic(); }, 100);
     }
 
     function gameOver() {
-      isPlaying = false; isGameOver = true; cancelAnimationFrame(animId); audio.stopMusic();
+      isPlaying = false; isGameOver = true; 
+      cancelAnimationFrame(animId); 
+      audio.stopMusic();
+      
       if (Math.floor(score) > highScore) {
-        highScore = Math.floor(score); localStorage.setItem('vk_runner_hs', highScore);
-        document.getElementById('recordFlash').style.display = 'block'; setTimeout(() => document.getElementById('recordFlash').style.display = 'none', 500);
+        highScore = Math.floor(score); 
+        localStorage.setItem('vk_runner_hs', highScore);
+        const rf = document.getElementById('recordFlash');
+        if(rf) { rf.style.display = 'block'; setTimeout(() => rf.style.display = 'none', 500); }
       }
+      
       saveToCloud(false);
-      document.getElementById('finalScore').textContent = Math.floor(score);
-      document.getElementById('highScore').textContent = highScore;
-      document.getElementById('runCoins').textContent = runCoins;
-      document.getElementById('gameOverScreen').classList.add('active');
-      document.getElementById('gameUI').style.display = 'none';
+      
+      const finalScoreEl = document.getElementById('finalScore');
+      const highScoreEl = document.getElementById('highScore');
+      const runCoinsEl = document.getElementById('runCoins');
+      const gameOverScreen = document.getElementById('gameOverScreen');
+      const gameUI = document.getElementById('gameUI');
+      
+      if (finalScoreEl) finalScoreEl.textContent = Math.floor(score);
+      if (highScoreEl) highScoreEl.textContent = highScore;
+      if (runCoinsEl) runCoinsEl.textContent = runCoins;
+      if (gameOverScreen) gameOverScreen.classList.add('active');
+      if (gameUI) gameUI.style.display = 'none';
       if (canRevive) showRevive();
     }
 
@@ -812,33 +878,49 @@
 
     function updateSoundButton() { const b = document.getElementById('soundBtn'); if(b) { b.textContent = audio.enabled ? '🔊' : '🔇'; b.classList.toggle('muted', !audio.enabled); } }
     
-    document.getElementById('playBtn').addEventListener('click', () => { audio.playClick(); startGame(); });
-    document.getElementById('restartBtn').addEventListener('click', () => { audio.playClick(); startGame(); });
-    document.getElementById('resumeBtn').addEventListener('click', () => { audio.playClick(); resumeGame(); });
-    document.getElementById('menuBtn').addEventListener('click', () => { audio.playClick(); exitAndSave(); });
-    document.getElementById('exitGameOverBtn').addEventListener('click', () => { audio.playClick(); exitAndSave(); });
-    document.getElementById('reviveBtn').addEventListener('click', () => { audio.playClick(); if (vkReady) { bridge.send('VKWebAppShowNativeAds', { ad_type: 'reward', ad_format: 'reward_video' }).then(revive).catch(revive); } else revive(); });
-    document.getElementById('shopBtn').addEventListener('click', () => { audio.playClick(); openShop(); });
-    document.getElementById('missionsBtn').addEventListener('click', () => { audio.playClick(); openMissions(); });
+    const playBtn = document.getElementById('playBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const exitGameOverBtn = document.getElementById('exitGameOverBtn');
+    const reviveBtn = document.getElementById('reviveBtn');
+    const shopBtn = document.getElementById('shopBtn');
+    const missionsBtn = document.getElementById('missionsBtn');
+    const closeShopBtn = document.getElementById('closeShopBtn');
+    const closeMissionsBtn = document.getElementById('closeMissionsBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const exitBtn = document.getElementById('exitBtn');
+    const soundBtn = document.getElementById('soundBtn');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeValue = document.getElementById('volumeValue');
+    const musicToggle = document.getElementById('musicToggle');
+    const sfxToggle = document.getElementById('sfxToggle');
     
-    // 🔑 FIX: Закрытие магазина
-    document.getElementById('closeShopBtn').addEventListener('click', () => { 
-      audio.playClick(); 
-      document.getElementById('shopScreen').classList.remove('active'); 
-    });
-    
-    document.getElementById('closeMissionsBtn').addEventListener('click', () => { audio.playClick(); document.getElementById('missionsScreen').classList.remove('active'); });
-    document.getElementById('settingsBtn').addEventListener('click', () => { audio.playClick(); document.getElementById('settingsScreen').classList.add('active'); });
-    document.getElementById('closeSettingsBtn').addEventListener('click', () => { audio.playClick(); document.getElementById('settingsScreen').classList.remove('active'); });
-    document.getElementById('pauseBtn').addEventListener('click', () => { audio.playClick(); pauseGame(); });
-    document.getElementById('exitBtn').addEventListener('click', () => { audio.playClick(); exitAndSave(); });
-    document.getElementById('soundBtn').addEventListener('click', () => { audio.playClick(); audio.toggle(); updateSoundButton(); });
-    document.getElementById('volumeSlider').addEventListener('input', e => { audio.setVolume(e.target.value/100); document.getElementById('volumeValue').textContent = e.target.value+'%'; });
-    document.getElementById('musicToggle').addEventListener('change', e => { audio.musicEnabled = e.target.checked; if (audio.musicEnabled && isPlaying && !isPaused && audio.enabled) audio.playGameMusic(); else if (!audio.musicEnabled) audio.stopMusic(); });
-    document.getElementById('sfxToggle').addEventListener('change', e => { audio.sfxEnabled = e.target.checked; });
+    if(playBtn) playBtn.addEventListener('click', () => { audio.playClick(); startGame(); });
+    if(restartBtn) restartBtn.addEventListener('click', () => { audio.playClick(); startGame(); });
+    if(resumeBtn) resumeBtn.addEventListener('click', () => { audio.playClick(); resumeGame(); });
+    if(menuBtn) menuBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
+    if(exitGameOverBtn) exitGameOverBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
+    if(reviveBtn) reviveBtn.addEventListener('click', () => { audio.playClick(); if (vkReady) { bridge.send('VKWebAppShowNativeAds', { ad_type: 'reward', ad_format: 'reward_video' }).then(revive).catch(revive); } else revive(); });
+    if(shopBtn) shopBtn.addEventListener('click', () => { audio.playClick(); openShop(); });
+    if(missionsBtn) missionsBtn.addEventListener('click', () => { audio.playClick(); openMissions(); });
+    if(closeShopBtn) closeShopBtn.addEventListener('click', () => { audio.playClick(); const ss = document.getElementById('shopScreen'); if(ss) ss.classList.remove('active'); });
+    if(closeMissionsBtn) closeMissionsBtn.addEventListener('click', () => { audio.playClick(); const ms = document.getElementById('missionsScreen'); if(ms) ms.classList.remove('active'); });
+    if(settingsBtn) settingsBtn.addEventListener('click', () => { audio.playClick(); const ss = document.getElementById('settingsScreen'); if(ss) ss.classList.add('active'); });
+    if(closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => { audio.playClick(); const ss = document.getElementById('settingsScreen'); if(ss) ss.classList.remove('active'); });
+    if(pauseBtn) pauseBtn.addEventListener('click', () => { audio.playClick(); pauseGame(); });
+    if(exitBtn) exitBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
+    if(soundBtn) soundBtn.addEventListener('click', () => { audio.playClick(); audio.toggle(); updateSoundButton(); });
+    if(volumeSlider) volumeSlider.addEventListener('input', e => { audio.setVolume(e.target.value/100); if(volumeValue) volumeValue.textContent = e.target.value+'%'; });
+    if(musicToggle) musicToggle.addEventListener('change', e => { audio.musicEnabled = e.target.checked; if (audio.musicEnabled && isPlaying && !isPaused && audio.enabled) audio.playGameMusic(); else if (!audio.musicEnabled) audio.stopMusic(); });
+    if(sfxToggle) sfxToggle.addEventListener('change', e => { audio.sfxEnabled = e.target.checked; });
 
-    document.getElementById('highScore').textContent = highScore;
-    document.getElementById('totalCoins').textContent = totalCoins;
+    const highScoreEl = document.getElementById('highScore');
+    const totalCoinsElInit = document.getElementById('totalCoins');
+    if (highScoreEl) highScoreEl.textContent = highScore;
+    if (totalCoinsElInit) totalCoinsElInit.textContent = totalCoins;
     updateSoundButton();
     
     let audioInitialized = false;
