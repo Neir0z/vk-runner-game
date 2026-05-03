@@ -771,9 +771,9 @@
         player.grounded = true;
       }
 
-      // Animation frame
+      // FIXED: Animation with fixed speed
       if (player.grounded) {
-        animFrame += gameSpeed * 0.1;
+        animFrame += 0.15;
       }
 
       spawnObjects();
