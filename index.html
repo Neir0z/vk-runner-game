@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VK Runner Pro</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,26 +26,6 @@
     
     .score { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
     .coins { font-size: 1.2rem; color: #ffd700; }
-    .level-indicator {
-      position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-      background: linear-gradient(135deg, #9b59b6, #8e44ad);
-      padding: 10px 25px; border-radius: 20px; font-weight: bold;
-      font-size: 1.2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      pointer-events: none; z-index: 100;
-    }
-    
-    .powerups-display { 
-      position: absolute; top: 80px; left: 10px; display: flex; gap: 10px; z-index: 100; pointer-events: none;
-    }
-    .powerup-icon {
-      width: 50px; height: 50px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center; font-size: 2rem;
-      animation: pulse 0.5s; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    }
-    .powerup-magnet { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-    .powerup-shield { background: linear-gradient(135deg, #3498db, #2980b9); }
-    .powerup-double { background: linear-gradient(135deg, #f39c12, #f1c40f); }
-    .powerup-doublejump { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
     
     .controls { display: flex; gap: 10px; pointer-events: auto; }
     .btn-small {
@@ -127,7 +107,6 @@
 
   <canvas id="game"></canvas>
   <div class="record-flash" id="recordFlash"></div>
-  <div class="level-indicator" id="levelIndicator">Уровень 1</div>
 
   <div class="ui" id="gameUI" style="display: none;">
     <div class="score-box">
@@ -135,13 +114,11 @@
       <div class="coins">💰 <span id="coins">0</span> (всего: <span id="totalCoins">0</span>)</div>
     </div>
     <div class="controls">
-      <button class="btn-small" id="soundBtn" title="Звук">🔊</button>
-      <button class="btn-small" id="pauseBtn" title="Пауза">⏸</button>
-      <button class="btn-small" id="exitBtn" title="Выйти">🚪</button>
+      <button class="btn-small" id="soundBtn">🔊</button>
+      <button class="btn-small" id="pauseBtn">⏸</button>
+      <button class="btn-small" id="exitBtn">🚪</button>
     </div>
   </div>
-
-  <div class="powerups-display" id="powerupsDisplay"></div>
 
   <div class="overlay active" id="mainMenu">
     <h1 class="menu-title">🏃 VK Runner Pro</h1>
@@ -149,7 +126,7 @@
     <button class="btn btn-secondary" id="shopBtn">🛒 Магазин</button>
     <button class="btn btn-secondary" id="missionsBtn">📋 Задания</button>
     <button class="btn btn-secondary" id="settingsBtn">⚙️ Настройки</button>
-    <p class="hint">Управление: Пробел / Клик / Тап<br>Собирай монеты 💰, избегай камней 🪨</p>
+    <p class="hint">Управление: Пробел / Клик / Тап<br>Собирай монеты 💰, избегай камней и мышей 🦇</p>
   </div>
 
   <div class="pause-menu" id="pauseMenu">
@@ -212,7 +189,7 @@
     class AudioSystem {
       constructor() {
         this.enabled = true; this.musicEnabled = true; this.sfxEnabled = true;
-        this.volume = 0.7; this.ctx = null; this.musicInterval = null; this.noteIndex = 0;
+        this.volume = 0.7; this.ctx = null; this.musicInterval = null;
         this.isMenuMusic = false;
         this.menuNotes = [261.63, 0, 329.63, 0, 392.00, 0, 523.25, 0];
         this.gameNotes = [261.63, 329.63, 392.00, 523.25, 293.66, 349.23, 440.00, 587.33];
@@ -225,7 +202,7 @@
       }
       playMenuMusic() {
         if (!this.musicEnabled || !this.ctx || !this.enabled) return;
-        this.isMenuMusic = true; this.noteIndex = 0;
+        this.isMenuMusic = true;
         const playNote = () => {
           if (!this.isMenuMusic || !this.musicEnabled || !this.enabled || !this.ctx) return;
           const freq = this.menuNotes[this.noteIndex];
@@ -301,8 +278,7 @@
     const skins = {
       default: { name: 'Стандарт', color: '#ff8c00', price: 0 }, blue: { name: 'Синий', color: '#3498db', price: 100 },
       green: { name: 'Зелёный', color: '#27ae60', price: 100 }, red: { name: 'Красный', color: '#e74c3c', price: 150 },
-      purple: { name: 'Фиолет', color: '#9b59b6', price: 150 }, gold: { name: 'Золото', color: '#f1c40f', price: 500 },
-      rainbow: { name: 'Радуга', color: 'rainbow', price: 1000 }
+      purple: { name: 'Фиолет', color: '#9b59b6', price: 150 }, gold: { name: 'Золото', color: '#f1c40f', price: 500 }
     };
     
     const shopItems = {
@@ -321,7 +297,7 @@
       Object.keys(skins).forEach(id => {
         const skin = skins[id]; const owned = ownedSkins.includes(id); const selected = selectedSkin === id;
         const item = document.createElement('div'); item.className = 'shop-item';
-        item.innerHTML = `<div class="shop-item-icon" style="background:${id==='rainbow'?'linear-gradient(135deg,red,orange,yellow,green,blue,indigo,violet)':skin.color};border-radius:8px"></div><div class="shop-item-name">${skin.name}</div><div class="shop-item-price">${owned ? (selected ? 'Выбрано ✓' : 'Куплено') : skin.price+' 💰'}</div>`;
+        item.innerHTML = `<div class="shop-item-icon" style="background:${skin.color};border-radius:8px"></div><div class="shop-item-name">${skin.name}</div><div class="shop-item-price">${owned ? (selected ? 'Выбрано ✓' : 'Куплено') : skin.price+' 💰'}</div>`;
         item.onclick = () => {
           if(owned) { selectedSkin = id; localStorage.setItem('vk_runner_selected_skin', id); openShop(); audio.playClick(); }
           else if(totalCoins >= skin.price) { totalCoins -= skin.price; ownedSkins.push(id); selectedSkin = id; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', id); document.getElementById('shopCoins').textContent = totalCoins; openShop(); audio.playCoin(); }
@@ -364,8 +340,7 @@
       const types = [
         { id: 'run_distance', name: 'Пробеги дистанцию', target: 200, reward: 50, icon: '🏃' },
         { id: 'collect_coins', name: 'Собери монеты', target: 30, reward: 40, icon: '💰' },
-        { id: 'jump_count', name: 'Прыгни', target: 20, reward: 30, icon: '⤴️' },
-        { id: 'complete_level', name: 'Пройди уровень', target: 3, reward: 60, icon: '🏆' }
+        { id: 'jump_count', name: 'Прыгни', target: 20, reward: 30, icon: '⤴️' }
       ];
       missions = [];
       for(let i=0; i<3; i++) {
@@ -399,22 +374,27 @@
     }
 
     // ============================================
-    // === CANVAS
+    // === CANVAS & ASSETS
     // ============================================
     const canvas = document.getElementById('game'); const ctx = canvas.getContext('2d');
     let dpr = window.devicePixelRatio || 1; let W, H, floorY;
     function resize() { W = window.innerWidth; H = window.innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); floorY = H * 0.82; }
     window.addEventListener('resize', resize); resize();
 
+    const assets = { coin: new Image() };
+    assets.coin.onload = () => console.log('✅ Coin loaded');
+    assets.coin.onerror = () => console.warn('⚠️ Coin failed, using fallback');
+    assets.coin.src = 'assets/coin.png';
+
     // ============================================
     // === GAME STATE
     // ============================================
-    let score = 0, runCoins = 0, currentLevel = 1, levelScore = 0;
+    let score = 0, runCoins = 0;
     let isPlaying = false, isPaused = false, isGameOver = false;
     let gameSpeed = 5; let lastTime = 0; let animFrame = 0; let screenShake = 0;
-    let moonHappy = 0; // 0 = neutral, 1 = happy, -1 = sad
+    let moonMood = 0; // 0 = neutral, 1 = happy, -1 = sad
     
-    let player = { x: 0, y: 0, w: 50, h: 60, vy: 0, grounded: true, shield: false, magnet: false, doubleScore: false, doubleJump: false, jumps: 0 };
+    let player = { x: 0, y: 0, w: 40, h: 60, vy: 0, grounded: true, shield: false, magnet: false, doubleScore: false, doubleJump: false, jumps: 0 };
     let obstacles = [], coins = [], particles = [], powerups = [];
     let lastObstacleTime = 0, lastCoinTime = 0, lastPowerupTime = 0;
     let animId; let canRevive = false; let reviveTimer = null;
@@ -424,62 +404,119 @@
     // === DRAWING FUNCTIONS
     // ============================================
     function drawPlayer(ctx, x, y, w, h, frame, isJumping) {
-      const time = Date.now() * 0.008;
-      let skinColor = skins[selectedSkin] ? skins[selectedSkin].color : '#ff8c00';
-      if (skinColor === 'rainbow') skinColor = `hsl(${(Date.now()/10)%360}, 100%, 50%)`;
+      const time = Date.now() * 0.01;
+      const skinColor = skins[selectedSkin]?.color || '#ff8c00';
       
-      ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(x+w/2, y+h, w*0.4, h*0.1, 0, 0, Math.PI*2); ctx.fill();
-      if (player.shield) { ctx.fillStyle = `rgba(52,152,219, ${0.3+Math.sin(time*5)*0.1})`; ctx.beginPath(); ctx.arc(x+w/2, y+h/2, w*0.8, 0, Math.PI*2); ctx.fill(); }
-      ctx.fillStyle = skinColor; ctx.fillRect(x+w*0.25, y+h*0.25, w*0.5, h*0.4);
-      ctx.fillStyle = '#1a1a4e'; ctx.fillRect(x+w*0.25, y+h*0.6, w*0.5, h*0.2);
-      ctx.fillStyle = '#fdbcb4'; ctx.beginPath(); ctx.arc(x+w*0.6, y+h*0.15, w*0.18, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#1a1a2e'; ctx.beginPath(); ctx.arc(x+w*0.6, y+h*0.1, w*0.18, Math.PI, 0); ctx.fill(); ctx.fillRect(x+w*0.42, y+h*0.08, w*0.18, w*0.1);
-      ctx.fillStyle = 'white'; ctx.fillRect(x+w*0.62, y+h*0.12, w*0.08, w*0.08); ctx.fillStyle = '#1a1a2e'; ctx.fillRect(x+w*0.66, y+h*0.14, w*0.04, w*0.04);
-      ctx.strokeStyle = '#fdbcb4'; ctx.lineWidth = w*0.08; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(x+w*0.3, y+h*0.3); ctx.lineTo(x+w*0.15, y+h*0.45+Math.sin(time+frame)*h*0.1); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x+w*0.7, y+h*0.3); ctx.lineTo(x+w*0.85, y+h*0.45+Math.sin(time+frame+Math.PI)*h*0.1); ctx.stroke();
-      ctx.strokeStyle = '#fdbcb4'; ctx.lineWidth = w*0.1;
-      ctx.beginPath(); ctx.moveTo(x+w*0.35, y+h*0.75); ctx.lineTo(x+w*0.3+Math.sin(time+frame)*w*0.1, y+h*0.85); ctx.lineTo(x+w*0.25+Math.sin(time+frame)*w*0.15, y+h*0.95); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(x+w*0.65, y+h*0.75); ctx.lineTo(x+w*0.7+Math.sin(time+frame+Math.PI)*w*0.1, y+h*0.85); ctx.lineTo(x+w*0.75+Math.sin(time+frame+Math.PI)*w*0.15, y+h*0.95); ctx.stroke();
-      ctx.fillStyle = 'white'; ctx.beginPath(); ctx.ellipse(x+w*0.25+Math.sin(time+frame)*w*0.15, y+h*0.96, w*0.12, h*0.04, 0, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(x+w*0.75+Math.sin(time+frame+Math.PI)*w*0.15, y+h*0.96, w*0.12, h*0.04, 0, 0, Math.PI*2); ctx.fill();
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath(); ctx.ellipse(x + w/2, y + h, w * 0.5, h * 0.08, 0, 0, Math.PI*2); ctx.fill();
+      
+      // Shield effect
+      if (player.shield) {
+        ctx.fillStyle = `rgba(52,152,219, ${0.3 + Math.sin(time*5)*0.1})`;
+        ctx.beginPath(); ctx.arc(x + w/2, y + h/2, w * 0.9, 0, Math.PI*2); ctx.fill();
+      }
+      
+      // Legs (animated)
+      ctx.strokeStyle = '#fdbcb4'; ctx.lineWidth = w * 0.25; ctx.lineCap = 'round';
+      const legSwing = isJumping ? 0.3 : Math.sin(time * 1.5) * 0.6;
+      ctx.beginPath(); ctx.moveTo(x + w*0.4, y + h*0.65); ctx.lineTo(x + w*(0.4 - legSwing), y + h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + w*0.6, y + h*0.65); ctx.lineTo(x + w*(0.6 + legSwing), y + h); ctx.stroke();
+      
+      // Shorts
+      ctx.fillStyle = '#1a1a4e';
+      ctx.fillRect(x + w*0.25, y + h*0.55, w*0.5, h*0.2);
+      
+      // Torso
+      ctx.fillStyle = skinColor;
+      ctx.fillRect(x + w*0.3, y + h*0.25, w*0.4, h*0.35);
+      
+      // Arms (animated)
+      ctx.strokeStyle = '#fdbcb4'; ctx.lineWidth = w * 0.2;
+      const armSwing = isJumping ? -0.5 : Math.sin(time * 1.5) * 0.8;
+      ctx.beginPath(); ctx.moveTo(x + w*0.35, y + h*0.3); ctx.lineTo(x + w*(0.2 - armSwing), y + h*0.5); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + w*0.65, y + h*0.3); ctx.lineTo(x + w*(0.8 + armSwing), y + h*0.5); ctx.stroke();
+      
+      // Head
+      ctx.fillStyle = '#fdbcb4';
+      ctx.beginPath(); ctx.arc(x + w*0.5, y + h*0.15, w*0.35, 0, Math.PI*2); ctx.fill();
+      
+      // Hair
+      ctx.fillStyle = '#1a1a2e';
+      ctx.beginPath(); ctx.arc(x + w*0.5, y + h*0.1, w*0.35, Math.PI, 0); ctx.fill();
+      ctx.fillRect(x + w*0.15, y + h*0.08, w*0.35, w*0.15);
+      
+      // Headband
+      ctx.fillStyle = skinColor;
+      ctx.fillRect(x + w*0.15, y + h*0.12, w*0.7, w*0.08);
+      
+      // Face
+      ctx.fillStyle = 'white';
+      ctx.fillRect(x + w*0.55, y + h*0.12, w*0.15, w*0.12);
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(x + w*0.65, y + h*0.15, w*0.08, w*0.08);
+    }
+
+    function drawBat(ctx, x, y, w, h) {
+      const time = Date.now() * 0.01;
+      const wingFlap = Math.sin(time * 4) * 0.5;
+      
+      ctx.fillStyle = '#2c3e50';
+      // Body
+      ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2, w*0.3, h*0.4, 0, 0, Math.PI*2); ctx.fill();
+      // Wings
+      ctx.fillStyle = '#1a252f';
+      ctx.beginPath();
+      ctx.moveTo(x + w*0.3, y + h*0.4);
+      ctx.quadraticCurveTo(x + w*0.1, y + h*(0.2 + wingFlap), x, y + h*0.5);
+      ctx.quadraticCurveTo(x + w*0.1, y + h*(0.6 + wingFlap), x + w*0.3, y + h*0.6);
+      ctx.fill();
+      
+      ctx.beginPath();
+      ctx.moveTo(x + w*0.7, y + h*0.4);
+      ctx.quadraticCurveTo(x + w*0.9, y + h*(0.2 + wingFlap), x + w, y + h*0.5);
+      ctx.quadraticCurveTo(x + w*0.9, y + h*(0.6 + wingFlap), x + w*0.7, y + h*0.6);
+      ctx.fill();
+      
+      // Eyes
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath(); ctx.arc(x + w*0.4, y + h*0.35, 3, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + w*0.6, y + h*0.35, 3, 0, Math.PI*2); ctx.fill();
     }
 
     function drawMoon(ctx) {
-      const mx = W * 0.8;
-      const my = floorY * 0.25;
-      const radius = 50;
+      const mx = W * 0.8; const my = floorY * 0.25; const radius = 50;
+      const time = Date.now() * 0.001;
+      
+      // Glow
+      const gradient = ctx.createRadialGradient(mx, my, radius * 0.5, mx, my, radius * 1.8);
+      gradient.addColorStop(0, 'rgba(240, 230, 140, 0.8)');
+      gradient.addColorStop(0.4, 'rgba(240, 230, 140, 0.3)');
+      gradient.addColorStop(1, 'rgba(240, 230, 140, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath(); ctx.arc(mx, my, radius * 1.8, 0, Math.PI*2); ctx.fill();
       
       // Moon body
-      ctx.fillStyle = '#f0e68c'; ctx.globalAlpha = 0.9;
-      ctx.beginPath(); ctx.arc(mx, my, radius, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f0e68c'; ctx.globalAlpha = 0.95;
+      ctx.beginPath(); ctx.arc(mx, my, radius, 0, Math.PI*2); ctx.fill();
       
-      // Face expression based on moonHappy
+      // Face
       ctx.fillStyle = '#2c3e50';
-      
-      // Eyes
-      ctx.beginPath();
-      ctx.arc(mx - 15, my - 10, 6, 0, Math.PI * 2);
-      ctx.arc(mx + 15, my - 10, 6, 0, Math.PI * 2);
-      ctx.fill();
+      // Blinking eyes
+      const blink = Math.sin(time * 2) > 0.95;
+      if (blink) {
+        ctx.beginPath(); ctx.moveTo(mx-18, my-10); ctx.lineTo(mx-10, my-10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(mx+10, my-10); ctx.lineTo(mx+18, my-10); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.arc(mx-14, my-10, 5, 0, Math.PI*2); ctx.arc(mx+14, my-10, 5, 0, Math.PI*2); ctx.fill();
+      }
       
       // Mouth
       ctx.beginPath();
-      if (moonHappy === 1) {
-        // Happy smile
-        ctx.arc(mx, my, 20, 0.2 * Math.PI, 0.8 * Math.PI);
-      } else if (moonHappy === -1) {
-        // Sad frown
-        ctx.arc(mx, my + 30, 20, 1.2 * Math.PI, 1.8 * Math.PI);
-      } else {
-        // Neutral
-        ctx.moveTo(mx - 15, my + 15);
-        ctx.lineTo(mx + 15, my + 15);
-      }
-      ctx.lineWidth = 4;
-      ctx.strokeStyle = '#2c3e50';
-      ctx.stroke();
-      
+      if (moonMood === 1) ctx.arc(mx, my+5, 20, 0.1*Math.PI, 0.9*Math.PI);
+      else if (moonMood === -1) ctx.arc(mx, my+30, 15, 1.2*Math.PI, 1.8*Math.PI);
+      else ctx.arc(mx, my+10, 15, 0.2*Math.PI, 0.8*Math.PI);
+      ctx.lineWidth = 4; ctx.strokeStyle = '#2c3e50'; ctx.stroke();
       ctx.globalAlpha = 1;
     }
 
@@ -491,8 +528,8 @@
       
       drawMoon(ctx);
       
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      for (let i = 0; i < 60; i++) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      for (let i = 0; i < 50; i++) {
         const x = ((i * 137.5 + 12345) % W); const y = ((i * 89.3 + 12345) % (floorY * 0.7));
         const twinkle = Math.sin(Date.now() * 0.001 + i) * 0.5 + 0.5;
         ctx.globalAlpha = twinkle; ctx.fillRect(x, y, 2, 2);
@@ -525,17 +562,12 @@
     // === GAME LOGIC
     // ============================================
     function resetGame() {
-      score = 0; runCoins = 0; gameSpeed = 5; currentLevel = 1; levelScore = 0;
+      score = 0; runCoins = 0; gameSpeed = 5; // 🔑 FIX: Сброс скорости
       player.x = W * 0.15; player.y = floorY - 60; player.vy = 0; player.grounded = true;
       player.shield = false; player.magnet = false; player.doubleScore = false; player.doubleJump = false; player.jumps = 0;
       obstacles = []; coins = []; particles = []; powerups = [];
       lastObstacleTime = 0; lastCoinTime = 0; lastPowerupTime = 0;
-      animFrame = 0; screenShake = 0; canRevive = true; moonHappy = 0;
-      updateLevelIndicator();
-    }
-
-    function updateLevelIndicator() {
-      document.getElementById('levelIndicator').textContent = `Уровень ${currentLevel}`;
+      animFrame = 0; screenShake = 0; canRevive = true; moonMood = 0;
     }
 
     function jump() {
@@ -544,13 +576,13 @@
         player.vy = -13; player.grounded = false; player.jumps = 1; 
         audio.playJump(); createParticles(player.x+player.w/2, player.y+player.h, 6, '#8b7355'); 
         updateMission('jump_count', 1);
-        moonHappy = 1; setTimeout(() => { if(moonHappy === 1) moonHappy = 0; }, 500);
+        moonMood = 1; setTimeout(() => { if(moonMood === 1) moonMood = 0; }, 600);
       }
       else if (player.doubleJump && player.jumps < 2) { 
         player.vy = -13; player.jumps = 2; 
         audio.playJump(); createParticles(player.x+player.w/2, player.y+player.h, 6, '#3498db'); 
         updateMission('jump_count', 1);
-        moonHappy = 1; setTimeout(() => { if(moonHappy === 1) moonHappy = 0; }, 500);
+        moonMood = 1; setTimeout(() => { if(moonMood === 1) moonMood = 0; }, 600);
       }
     }
 
@@ -560,8 +592,8 @@
       const now = performance.now();
       if (now - lastObstacleTime > 1200 + Math.random() * 500) {
         const r = Math.random();
-        if (r < 0.7) obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
-        else obstacles.push({ x: W, y: floorY - 110, w: 40, h: 30, type: 'bird' });
+        if (r < 0.6) obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
+        else obstacles.push({ x: W, y: floorY - 100 - Math.random()*40, w: 40, h: 30, type: 'bat' });
         lastObstacleTime = now;
       }
       if (now - lastCoinTime > 800 + Math.random() * 400) {
@@ -575,9 +607,7 @@
         lastPowerupTime = now;
       }
       
-      if (Math.random() < 0.005) {
-        shootingStars.push({ x: Math.random() * W, y: Math.random() * floorY * 0.5, alpha: 1 });
-      }
+      if (Math.random() < 0.005) shootingStars.push({ x: Math.random() * W, y: Math.random() * floorY * 0.5, alpha: 1 });
     }
 
     function checkCollision(a, b) { return a.x + 10 < b.x + b.w - 10 && a.x + a.w - 10 > b.x + 10 && a.y + 10 < b.y + b.h - 10 && a.y + a.h - 10 > b.y + 10; }
@@ -615,12 +645,7 @@
         let o = obstacles[i]; o.x -= gameSpeed; if (o.x + o.w < 0) obstacles.splice(i, 1);
         if (checkCollision(player, o)) {
           if (player.shield) { player.shield = false; audio.playCrash(); screenShake = 10; obstacles.splice(i, 1); document.querySelector('.powerup-shield')?.remove(); }
-          else { 
-            audio.playCrash(); screenShake = 20; 
-            moonHappy = -1;
-            createParticles(player.x+player.w/2, player.y+player.h/2, 25, '#e74c3c'); 
-            gameOver(); 
-          }
+          else { audio.playCrash(); screenShake = 20; moonMood = -1; createParticles(player.x+player.w/2, player.y+player.h/2, 25, '#e74c3c'); gameOver(); }
         }
       }
 
@@ -645,16 +670,8 @@
       }
 
       score += player.doubleScore ? 0.2 : 0.1;
-      levelScore += player.doubleScore ? 0.2 : 0.1;
-      
-      if (levelScore >= 100) {
-        currentLevel++;
-        levelScore = 0;
-        updateLevelIndicator();
-        updateMission('complete_level', 1);
-      }
-      
-      gameSpeed = 5 + (currentLevel - 1) * 0.5;
+      // Плавное ускорение без уровней
+      gameSpeed = 5 + Math.floor(score / 150) * 0.3;
       document.getElementById('score').textContent = Math.floor(score);
       updateMission('run_distance', 0.1);
       
@@ -676,35 +693,30 @@
 
       coins.forEach(c => {
         const s = 0.8+Math.sin(time+c.bob)*0.25;
-        ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(c.x+c.w/2, c.y+c.h/2, c.w/2*s, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle = '#f39c12'; ctx.lineWidth = 3; ctx.stroke();
+        if (assets.coin.complete && assets.coin.naturalWidth > 0) {
+          ctx.save();
+          ctx.translate(c.x + c.w/2, c.y + c.h/2);
+          ctx.scale(s, s);
+          ctx.drawImage(assets.coin, -c.w/2, -c.h/2, c.w, c.h);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(c.x+c.w/2, c.y+c.h/2, c.w/2*s, 0, Math.PI*2); ctx.fill();
+          ctx.strokeStyle = '#f39c12'; ctx.lineWidth = 3; ctx.stroke();
+        }
       });
 
       obstacles.forEach(o => {
         if (o.type === 'rock') {
           ctx.fillStyle = '#7f8c8d';
           ctx.beginPath();
-          ctx.moveTo(o.x, o.y+o.h);
-          ctx.lineTo(o.x+o.w/2, o.y);
-          ctx.lineTo(o.x+o.w, o.y+o.h);
-          ctx.closePath();
-          ctx.fill();
+          ctx.moveTo(o.x, o.y+o.h); ctx.lineTo(o.x+o.w/2, o.y); ctx.lineTo(o.x+o.w, o.y+o.h);
+          ctx.closePath(); ctx.fill();
           ctx.fillStyle = '#95a5a6';
           ctx.beginPath();
-          ctx.moveTo(o.x+10, o.y+o.h-10);
-          ctx.lineTo(o.x+o.w/2, o.y+20);
-          ctx.lineTo(o.x+o.w-10, o.y+o.h-10);
-          ctx.closePath();
-          ctx.fill();
-        } else if (o.type === 'bird') {
-          ctx.fillStyle = '#c0392b';
-          ctx.beginPath();
-          ctx.moveTo(o.x, o.y+o.h/2);
-          ctx.lineTo(o.x+o.w/2, o.y);
-          ctx.lineTo(o.x+o.w, o.y+o.h/2);
-          ctx.lineTo(o.x+o.w/2, o.y+o.h);
-          ctx.closePath();
-          ctx.fill();
+          ctx.moveTo(o.x+10, o.y+o.h-10); ctx.lineTo(o.x+o.w/2, o.y+20); ctx.lineTo(o.x+o.w-10, o.y+o.h-10);
+          ctx.closePath(); ctx.fill();
+        } else if (o.type === 'bat') {
+          drawBat(ctx, o.x, o.y, o.w, o.h);
         }
       });
 
@@ -750,7 +762,7 @@
       if (!canRevive) return; clearInterval(reviveTimer); document.getElementById('reviveContainer').style.display = 'none';
       player.vy = 0; player.grounded = true; player.shield = true; player.x = W * 0.15;
       obstacles = obstacles.filter(o => o.x > W/2);
-      isGameOver = false; canRevive = false; moonHappy = 0; audio.playPowerup(); activatePowerup('shield');
+      isGameOver = false; canRevive = false; moonMood = 0; audio.playPowerup(); activatePowerup('shield');
       lastTime = performance.now(); loop(lastTime);
     }
 
@@ -788,26 +800,33 @@
 
     function updateSoundButton() { const b = document.getElementById('soundBtn'); b.textContent = audio.enabled ? '🔊' : '🔇'; b.classList.toggle('muted', !audio.enabled); }
     
-    document.getElementById('playBtn').onclick = () => { audio.playClick(); startGame(); };
-    document.getElementById('restartBtn').onclick = () => { audio.playClick(); startGame(); };
-    document.getElementById('resumeBtn').onclick = () => { audio.playClick(); resumeGame(); };
-    document.getElementById('menuBtn').onclick = () => { audio.playClick(); exitAndSave(); };
-    document.getElementById('exitGameOverBtn').onclick = () => { audio.playClick(); exitAndSave(); };
-    document.getElementById('reviveBtn').onclick = () => { audio.playClick(); if (vkReady) { bridge.send('VKWebAppShowNativeAds', { ad_type: 'reward', ad_format: 'reward_video' }).then(revive).catch(revive); } else revive(); };
-    document.getElementById('shopBtn').onclick = () => { audio.playClick(); openShop(); };
-    document.getElementById('missionsBtn').onclick = () => { audio.playClick(); openMissions(); };
-    document.getElementById('closeShopBtn').onclick = () => { audio.playClick(); document.getElementById('shopScreen').classList.remove('active'); };
-    document.getElementById('closeMissionsBtn').onclick = () => { audio.playClick(); document.getElementById('missionsScreen').classList.remove('active'); };
-    document.getElementById('settingsBtn').onclick = () => { audio.playClick(); document.getElementById('settingsScreen').classList.add('active'); };
-    document.getElementById('closeSettingsBtn').onclick = () => { audio.playClick(); document.getElementById('settingsScreen').classList.remove('active'); };
-    document.getElementById('pauseBtn').onclick = () => { audio.playClick(); pauseGame(); };
-    document.getElementById('exitBtn').onclick = () => { audio.playClick(); exitAndSave(); };
-    document.getElementById('soundBtn').onclick = () => { audio.playClick(); audio.toggle(); updateSoundButton(); };
-    document.getElementById('volumeSlider').oninput = e => { audio.setVolume(e.target.value/100); document.getElementById('volumeValue').textContent = e.target.value+'%'; };
+    document.getElementById('playBtn').addEventListener('click', () => { audio.playClick(); startGame(); });
+    document.getElementById('restartBtn').addEventListener('click', () => { audio.playClick(); startGame(); });
+    document.getElementById('resumeBtn').addEventListener('click', () => { audio.playClick(); resumeGame(); });
+    document.getElementById('menuBtn').addEventListener('click', () => { audio.playClick(); exitAndSave(); });
+    document.getElementById('exitGameOverBtn').addEventListener('click', () => { audio.playClick(); exitAndSave(); });
+    document.getElementById('reviveBtn').addEventListener('click', () => { audio.playClick(); if (vkReady) { bridge.send('VKWebAppShowNativeAds', { ad_type: 'reward', ad_format: 'reward_video' }).then(revive).catch(revive); } else revive(); });
+    document.getElementById('shopBtn').addEventListener('click', () => { audio.playClick(); openShop(); });
+    document.getElementById('missionsBtn').addEventListener('click', () => { audio.playClick(); openMissions(); });
+    
+    // 🔑 FIX: Закрытие магазина
+    document.getElementById('closeShopBtn').addEventListener('click', () => { 
+      audio.playClick(); 
+      document.getElementById('shopScreen').classList.remove('active'); 
+    });
+    
+    document.getElementById('closeMissionsBtn').addEventListener('click', () => { audio.playClick(); document.getElementById('missionsScreen').classList.remove('active'); });
+    document.getElementById('settingsBtn').addEventListener('click', () => { audio.playClick(); document.getElementById('settingsScreen').classList.add('active'); });
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => { audio.playClick(); document.getElementById('settingsScreen').classList.remove('active'); });
+    document.getElementById('pauseBtn').addEventListener('click', () => { audio.playClick(); pauseGame(); });
+    document.getElementById('exitBtn').addEventListener('click', () => { audio.playClick(); exitAndSave(); });
+    document.getElementById('soundBtn').addEventListener('click', () => { audio.playClick(); audio.toggle(); updateSoundButton(); });
+    document.getElementById('volumeSlider').addEventListener('input', e => { audio.setVolume(e.target.value/100); document.getElementById('volumeValue').textContent = e.target.value+'%'; });
 
     document.getElementById('highScore').textContent = highScore;
     document.getElementById('totalCoins').textContent = totalCoins;
     updateSoundButton();
+    
     let audioInitialized = false;
     function initAudioAndMusic() { if (audioInitialized) return; audioInitialized = true; audio.init(); audio.playMenuMusic(); }
     document.addEventListener('click', initAudioAndMusic, { once: true });
