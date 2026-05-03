@@ -155,13 +155,13 @@
     <h2 style="font-size: 2rem;">🛒 Магазин</h2>
     <div class="menu-stats"><div class="stat-row"><span class="stat-label">💰 Монеты:</span><span class="stat-value" id="shopCoins">0</span></div></div>
     <div class="shop-grid" id="shopGrid"></div>
-    <button class="btn btn-secondary" id="closeShopBtn">Закрыть</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('shopScreen').classList.remove('active'); audio.playClick();">Закрыть</button>
   </div>
 
   <div class="overlay" id="missionsScreen">
     <h2 style="font-size: 2rem;">📋 Задания</h2>
     <div id="missionsList"></div>
-    <button class="btn btn-secondary" id="closeMissionsBtn">Закрыть</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('missionsScreen').classList.remove('active'); audio.playClick();">Закрыть</button>
   </div>
 
   <div class="overlay" id="settingsScreen">
@@ -185,7 +185,7 @@
         </div>
       </div>
     </div>
-    <button class="btn btn-secondary" id="closeSettingsBtn">Закрыть</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('settingsScreen').classList.remove('active'); audio.playClick();">Закрыть</button>
   </div>
 
   <div class="overlay" id="loadingScreen"><div class="loading">Загрузка...</div></div>
@@ -580,12 +580,31 @@
     // === GAME LOGIC
     // ============================================
     function resetGame() {
-      score = 0; runCoins = 0; gameSpeed = 5; // 🔑 FIX: Сброс скорости
-      player.x = W * 0.15; player.y = floorY - 60; player.vy = 0; player.grounded = true;
-      player.shield = false; player.magnet = false; player.doubleScore = false; player.doubleJump = false; player.jumps = 0;
-      obstacles = []; coins = []; particles = []; powerups = [];
-      lastObstacleTime = 0; lastCoinTime = 0; lastPowerupTime = 0;
-      animFrame = 0; screenShake = 0; canRevive = true; moonMood = 0;
+      // 🔑 FIX: Полная перезагрузка состояния
+      cancelAnimationFrame(animId);
+      score = 0;
+      runCoins = 0;
+      gameSpeed = 5; // 🔑 FIX: Сброс скорости
+      player.x = W * 0.15;
+      player.y = floorY - 60;
+      player.vy = 0;
+      player.grounded = true;
+      player.shield = false;
+      player.magnet = false;
+      player.doubleScore = false;
+      player.doubleJump = false;
+      player.jumps = 0;
+      obstacles = [];
+      coins = [];
+      particles = [];
+      powerups = [];
+      lastObstacleTime = 0;
+      lastCoinTime = 0;
+      lastPowerupTime = 0;
+      animFrame = 0;
+      screenShake = 0;
+      canRevive = true;
+      moonMood = 0;
     }
 
     function jump() {
@@ -608,10 +627,22 @@
 
     function spawnObjects() {
       const now = performance.now();
+      // 🔑 FIX: Разные препятствия с разными размерами
       if (now - lastObstacleTime > 1200 + Math.random() * 500) {
         const r = Math.random();
-        if (r < 0.6) obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
-        else obstacles.push({ x: W, y: floorY - 100 - Math.random()*40, w: 40, h: 30, type: 'bat' });
+        if (r < 0.4) {
+          // Маленький камень
+          obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
+        } else if (r < 0.7) {
+          // Средний камень
+          obstacles.push({ x: W, y: floorY - 50, w: 50, h: 50, type: 'rock' });
+        } else if (r < 0.85) {
+          // Большой камень
+          obstacles.push({ x: W, y: floorY - 60, w: 60, h: 60, type: 'rock' });
+        } else {
+          // Летучая мышь
+          obstacles.push({ x: W, y: floorY - 100 - Math.random()*40, w: 40, h: 30, type: 'bat' });
+        }
         lastObstacleTime = now;
       }
       if (now - lastCoinTime > 800 + Math.random() * 400) {
@@ -693,10 +724,8 @@
       }
 
       score += player.doubleScore ? 0.2 : 0.1;
-      // Плавное ускорение без уровней
-      gameSpeed = 5 + Math.floor(score / 150) * 0.3;
-      const scoreEl = document.getElementById('score');
-      if (scoreEl) scoreEl.textContent = Math.floor(score);
+      // 🔑 FIX: Убрал динамическое увеличение скорости
+      document.getElementById('score').textContent = Math.floor(score);
       updateMission('run_distance', 0.1);
       
       if (screenShake > 0) { screenShake *= 0.9; if (screenShake < 0.5) screenShake = 0; }
@@ -760,7 +789,7 @@
     function startGame() {
       if (!audio.ctx) audio.init();
       audio.stopMusic(); audio.playGameMusic();
-      resetGame();
+      resetGame(); // 🔑 FIX: Здесь уже есть cancelAnimationFrame
       isPlaying = true; isPaused = false; isGameOver = false;
       
       const mainMenu = document.getElementById('mainMenu');
@@ -886,10 +915,6 @@
     const reviveBtn = document.getElementById('reviveBtn');
     const shopBtn = document.getElementById('shopBtn');
     const missionsBtn = document.getElementById('missionsBtn');
-    const closeShopBtn = document.getElementById('closeShopBtn');
-    const closeMissionsBtn = document.getElementById('closeMissionsBtn');
-    const settingsBtn = document.getElementById('settingsBtn');
-    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const exitBtn = document.getElementById('exitBtn');
     const soundBtn = document.getElementById('soundBtn');
@@ -906,10 +931,6 @@
     if(reviveBtn) reviveBtn.addEventListener('click', () => { audio.playClick(); if (vkReady) { bridge.send('VKWebAppShowNativeAds', { ad_type: 'reward', ad_format: 'reward_video' }).then(revive).catch(revive); } else revive(); });
     if(shopBtn) shopBtn.addEventListener('click', () => { audio.playClick(); openShop(); });
     if(missionsBtn) missionsBtn.addEventListener('click', () => { audio.playClick(); openMissions(); });
-    if(closeShopBtn) closeShopBtn.addEventListener('click', () => { audio.playClick(); const ss = document.getElementById('shopScreen'); if(ss) ss.classList.remove('active'); });
-    if(closeMissionsBtn) closeMissionsBtn.addEventListener('click', () => { audio.playClick(); const ms = document.getElementById('missionsScreen'); if(ms) ms.classList.remove('active'); });
-    if(settingsBtn) settingsBtn.addEventListener('click', () => { audio.playClick(); const ss = document.getElementById('settingsScreen'); if(ss) ss.classList.add('active'); });
-    if(closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => { audio.playClick(); const ss = document.getElementById('settingsScreen'); if(ss) ss.classList.remove('active'); });
     if(pauseBtn) pauseBtn.addEventListener('click', () => { audio.playClick(); pauseGame(); });
     if(exitBtn) exitBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
     if(soundBtn) soundBtn.addEventListener('click', () => { audio.playClick(); audio.toggle(); updateSoundButton(); });
