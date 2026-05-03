@@ -166,7 +166,7 @@
   <div class="pause-menu" id="pauseMenu">
     <h2 style="font-size: 2rem; margin-bottom: 10px;">⏸ Пауза</h2>
     <button class="btn btn-primary" id="resumeBtn">▶ Продолжить</button>
-    <button class="btn btn-secondary" id="menuBtn"> В меню</button>
+    <button class="btn btn-secondary" id="menuBtn">🏠 В меню</button>
   </div>
 
   <div class="overlay" id="gameOverScreen">
@@ -243,10 +243,9 @@
         if (!this.ctx) {
           try {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('✅ AudioContext created');
             return true;
           } catch (e) {
-            console.error('❌ Audio init failed:', e);
+            console.error('Audio init failed:', e);
             return false;
           }
         }
@@ -469,7 +468,7 @@
     resize();
 
     // ============================================
-    // === ASSETS (coins and obstacles only)
+    // === ASSETS - ONLY COIN AND OBSTACLE
     // ============================================
     const assets = {
       obstacle: new Image(),
@@ -502,10 +501,10 @@
     loadAsset('coin', 'assets/coin.png');
 
     // ============================================
-    // === ANIMATED PLAYER CHARACTER (DRAWN)
+    // === ANIMATED PLAYER - DRAWN PROGRAMMATICALLY
     // ============================================
     function drawPlayer(ctx, x, y, w, h, frame, isJumping) {
-      const time = Date.now() * 0.01;
+      const time = Date.now() * 0.008;
       const runCycle = isJumping ? 0 : Math.sin(frame * 0.5) * 0.3;
       
       // Shadow
@@ -854,7 +853,7 @@
         }
       });
 
-      // FIXED: Draw animated player character
+      // Draw animated player character
       drawPlayer(ctx, player.x, player.y, player.w, player.h, animFrame, !player.grounded);
 
       particles.forEach(p => {
