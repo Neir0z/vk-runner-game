@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>VK Runner</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,6 +18,7 @@
       pointer-events: none; z-index: 10;
     }
     .score { font-size: 1.5rem; font-weight: bold; text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+    .coins { font-size: 1.2rem; color: #ffd700; text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
     .overlay {
       position: absolute; inset: 0; background: rgba(0,0,0,0.75);
       display: none; flex-direction: column; align-items: center; justify-content: center;
@@ -41,26 +41,27 @@
 
   <div class="ui">
     <div class="score">🏆 <span id="score">0</span></div>
+    <div class="coins"> <span id="coins">0</span></div>
   </div>
 
   <div class="overlay" id="startScreen">
     <h1>🏃 VK Runner</h1>
     <button class="btn start" id="startBtn">Играть</button>
-    <p class="hint">Нажми или тапни, чтобы прыгнуть. Избегай препятствий.</p>
+    <p class="hint">Нажми или тапни, чтобы прыгнуть. Собирай монеты, избегай камней.</p>
   </div>
 
   <div class="overlay" id="gameOverScreen">
     <h2>💥 Игра окончена</h2>
     <p>Счёт: <span id="finalScore">0</span> | Рекорд: <span id="highScore">0</span></p>
+    <p>Монеты за забег: <span id="runCoins">0</span></p>
     <button class="btn start" id="restartBtn">Заново</button>
     <button class="btn ad" id="adBtn">📺 Реклама +50 очков</button>
     <p class="hint">Реклама работает только внутри приложения ВКонтакте</p>
   </div>
 
-  <!-- VK Bridge -->
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <script>
-    // === ИНИЦИАЛИЗАЦИЯ VK BRIDGE ===
+    // === VK BRIDGE ===
     const bridge = window.vkBridge;
     let vkReady = false;
     if (bridge) {
@@ -69,11 +70,11 @@
         .catch(console.error);
     }
 
-    // === НАСТРОЙКА CANVAS ===
+    // === CANVAS SETUP ===
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
     let dpr = window.devicePixelRatio || 1;
-    let W, H;
+    let W, H, floorY;
 
     function resize() {
       W = window.innerWidth;
@@ -84,52 +85,77 @@
       floorY = H * 0.85;
     }
     window.addEventListener('resize', resize);
-    let floorY = H * 0.85;
     resize();
 
-    // === ИГРОВЫЕ ПЕРЕМЕННЫЕ ===
+    // === GAME STATE ===
     let score = 0, highScore = parseInt(localStorage.getItem('vk_runner_hs') || '0');
+    let runCoins = 0, totalCoins = parseInt(localStorage.getItem('vk_runner_coins') || '0');
     let isPlaying = false, isGameOver = false;
-    let speed = 4;
-    const gravity = 0.6;
-    let player = { x: W * 0.2, y: floorY - 40, w: 40, h: 40, vy: 0, grounded: true };
-    let obstacles = [];
-    let lastObstacleTime = 0;
+    let speed = 5;
+    const gravity = 0.65;
+    let player = { x: W * 0.2, y: floorY - 60, w: 50, h: 60, vy: 0, grounded: true };
+    let obstacles = [], coins = [];
+    let lastObstacleTime = 0, lastCoinTime = 0;
     let animId;
 
-    // === ЗАГРУЗКА АССЕТОВ (ЗДЕСЬ ВСТАВЛЯЙ СВОИ КАРТИНКИ) ===
-    const playerImg = new Image();
-    // playerImg.src = 'assets/player.png'; // Раскомментируй, когда добавишь файл
-    const obstacleImg = new Image();
-    // obstacleImg.src = 'assets/obstacle.png';
+    // === ASSETS LOADING ===
+    const assets = {
+      player: new Image(),
+      obstacle: new Image(),
+      coin: new Image()
+    };
+    let assetsLoaded = 0;
+    const totalAssets = 3;
 
-    // === УПРАВЛЕНИЕ ===
+    function checkAssetsLoaded() {
+      assetsLoaded++;
+      if (assetsLoaded === totalAssets) console.log('Все спрайты загружены');
+    }
+
+    assets.player.onload = checkAssetsLoaded;
+    assets.player.onerror = () => console.warn('Не удалось загрузить player.png');
+    assets.player.src = 'assets/player.png';
+
+    assets.obstacle.onload = checkAssetsLoaded;
+    assets.obstacle.onerror = () => console.warn('Не удалось загрузить obstacle.png');
+    assets.obstacle.src = 'assets/obstacle.png';
+
+    assets.coin.onload = checkAssetsLoaded;
+    assets.coin.onerror = () => console.warn('Не удалось загрузить coin.png');
+    assets.coin.src = 'assets/coin.png';
+
+    // === INPUT ===
     function jump() {
       if (!isPlaying || isGameOver) return;
       if (player.grounded) {
-        player.vy = -12;
+        player.vy = -13;
         player.grounded = false;
       }
     }
-    window.addEventListener('keydown', e => { if (e.code === 'Space') jump(); });
+    window.addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'ArrowUp') jump(); });
     window.addEventListener('mousedown', jump);
     window.addEventListener('touchstart', e => { e.preventDefault(); jump(); }, { passive: false });
 
-    // === ЛОГИКА ===
-    function spawnObstacle() {
+    // === LOGIC ===
+    function spawnObjects() {
       const now = performance.now();
-      if (now - lastObstacleTime > 1000 + Math.random() * 1500) {
-        const w = 30 + Math.random() * 20;
-        const h = 30 + Math.random() * 40;
-        obstacles.push({ x: W, y: floorY - h, w, h });
+      if (now - lastObstacleTime > 1200 + Math.random() * 1500) {
+        obstacles.push({ x: W, y: floorY - 40, w: 50, h: 40 });
         lastObstacleTime = now;
       }
+      if (now - lastCoinTime > 800 + Math.random() * 1000) {
+        coins.push({ x: W, y: floorY - 90 - Math.random() * 60, w: 30, h: 30 });
+        lastCoinTime = now;
+      }
+    }
+
+    function checkCollision(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
     }
 
     function update() {
       if (!isPlaying || isGameOver) return;
 
-      // Игрок
       player.vy += gravity;
       player.y += player.vy;
       if (player.y + player.h >= floorY) {
@@ -138,42 +164,57 @@
         player.grounded = true;
       }
 
-      // Препятствия
-      spawnObstacle();
+      spawnObjects();
+
       for (let i = obstacles.length - 1; i >= 0; i--) {
         let o = obstacles[i];
         o.x -= speed;
         if (o.x + o.w < 0) obstacles.splice(i, 1);
+        if (checkCollision(player, o)) gameOver();
+      }
 
-        // Коллизия (упрощённая)
-        if (player.x < o.x + o.w &&
-            player.x + player.w > o.x &&
-            player.y < o.y + o.h &&
-            player.y + player.h > o.y) {
-          gameOver();
+      for (let i = coins.length - 1; i >= 0; i--) {
+        let c = coins[i];
+        c.x -= speed;
+        if (c.x + c.w < 0) coins.splice(i, 1);
+        if (checkCollision(player, c)) {
+          runCoins++;
+          totalCoins++;
+          localStorage.setItem('vk_runner_coins', totalCoins);
+          document.getElementById('coins').textContent = totalCoins;
+          coins.splice(i, 1);
         }
       }
 
-      // Сложность и счёт
       score += 0.1;
-      speed = 4 + Math.floor(score / 50) * 0.5;
+      speed = 5 + Math.floor(score / 80) * 0.4;
       document.getElementById('score').textContent = Math.floor(score);
+    }
+
+    function drawImageSafely(img, x, y, w, h, fallbackColor) {
+      if (img.complete && img.naturalWidth > 0) {
+        ctx.drawImage(img, x, y, w, h);
+      } else {
+        ctx.fillStyle = fallbackColor;
+        ctx.fillRect(x, y, w, h);
+      }
     }
 
     function draw() {
       ctx.clearRect(0, 0, W, H);
 
-      // Земля
+      // Фон/земля
       ctx.fillStyle = '#2d2d44';
       ctx.fillRect(0, floorY, W, H - floorY);
 
-      // Игрок (замени на ctx.drawImage(playerImg, ...) когда добавишь спрайт)
-      ctx.fillStyle = '#ff6b6b';
-      ctx.fillRect(player.x, player.y, player.w, player.h);
+      // Игрок
+      drawImageSafely(assets.player, player.x, player.y, player.w, player.h, '#ff6b6b');
 
-      // Препятствия (замени на ctx.drawImage(obstacleImg, ...))
-      ctx.fillStyle = '#4ecdc4';
-      obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+      // Препятствия
+      obstacles.forEach(o => drawImageSafely(assets.obstacle, o.x, o.y, o.w, o.h, '#4ecdc4'));
+
+      // Монеты
+      coins.forEach(c => drawImageSafely(assets.coin, c.x, c.y, c.w, c.h, '#ffd700'));
     }
 
     function loop() {
@@ -182,16 +223,19 @@
       animId = requestAnimationFrame(loop);
     }
 
-    // === СОСТОЯНИЯ ИГРЫ ===
     function startGame() {
       isPlaying = true;
       isGameOver = false;
       score = 0;
-      speed = 4;
+      runCoins = 0;
+      speed = 5;
       player.y = floorY - player.h;
       player.vy = 0;
       player.grounded = true;
       obstacles = [];
+      coins = [];
+      document.getElementById('score').textContent = '0';
+      document.getElementById('coins').textContent = totalCoins;
       document.getElementById('startScreen').classList.remove('active');
       document.getElementById('gameOverScreen').classList.remove('active');
       loop();
@@ -203,6 +247,7 @@
       isGameOver = true;
       cancelAnimationFrame(animId);
       document.getElementById('finalScore').textContent = Math.floor(score);
+      document.getElementById('runCoins').textContent = runCoins;
       if (Math.floor(score) > highScore) {
         highScore = Math.floor(score);
         localStorage.setItem('vk_runner_hs', highScore);
@@ -212,34 +257,20 @@
       if (bridge) bridge.send('VKWebAppTrackEvent', { event_name: 'game_over', score: Math.floor(score) });
     }
 
-    // === РЕКЛАМА ===
     document.getElementById('adBtn').addEventListener('click', async () => {
-      if (!vkReady) { alert('VK Bridge не подключён. Запусти игру внутри ВКонтакте.'); return; }
+      if (!vkReady) { alert('Запусти игру внутри ВКонтакте для работы рекламы'); return; }
       try {
-        const res = await bridge.send('VKWebAppShowNativeAds', {
-          ad_type: 'reward',
-          ad_format: 'reward_video'
-        });
+        const res = await bridge.send('VKWebAppShowNativeAds', { ad_type: 'reward', ad_format: 'reward_video' });
         if (res?.result) {
           score += 50;
           document.getElementById('score').textContent = Math.floor(score);
           alert('Реклама просмотрена! +50 очков');
-          if (Math.floor(score) > highScore) {
-            highScore = Math.floor(score);
-            localStorage.setItem('vk_runner_hs', highScore);
-          }
         }
-      } catch (e) {
-        console.warn('Реклама не показана:', e);
-        alert('Реклама временно недоступна');
-      }
+      } catch (e) { alert('Реклама временно недоступна'); }
     });
 
-    // === ПРИВЯЗКА КНОПОК ===
     document.getElementById('startBtn').addEventListener('click', startGame);
     document.getElementById('restartBtn').addEventListener('click', startGame);
-
-    // Показ стартового экрана
     document.getElementById('startScreen').classList.add('active');
   </script>
 </body>
