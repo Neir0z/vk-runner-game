@@ -138,33 +138,11 @@
       from { transform: translateX(400px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
-    
-    /* Debug panel */
-    .debug-panel {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.9);
-      color: #0f0;
-      padding: 10px;
-      border-radius: 8px;
-      font-family: monospace;
-      font-size: 12px;
-      max-width: 400px;
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 1000;
-      display: none;
-    }
-    
-    .debug-panel.show { display: block; }
   </style>
 </head>
 <body>
 
   <canvas id="game"></canvas>
-  
-  <div class="debug-panel" id="debugPanel"></div>
 
   <div class="ui" id="gameUI" style="display: none;">
     <div class="score-box">
@@ -188,7 +166,7 @@
   <div class="pause-menu" id="pauseMenu">
     <h2 style="font-size: 2rem; margin-bottom: 10px;">⏸ Пауза</h2>
     <button class="btn btn-primary" id="resumeBtn">▶ Продолжить</button>
-    <button class="btn btn-secondary" id="menuBtn">🏠 В меню</button>
+    <button class="btn btn-secondary" id="menuBtn"> В меню</button>
   </div>
 
   <div class="overlay" id="gameOverScreen">
@@ -237,32 +215,13 @@
   </div>
 
   <div class="overlay" id="loadingScreen">
-    <div class="loading">Загрузка...<br><small style="color: #aaa; font-size: 0.8rem;">Проверь консоль (F12)</small></div>
+    <div class="loading">Загрузка...</div>
   </div>
 
   <div class="save-indicator" id="saveIndicator">💾 Сохранено!</div>
 
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <script>
-    // ============================================
-    // === DEBUG SYSTEM
-    // ============================================
-    const debug = {
-      panel: document.getElementById('debugPanel'),
-      logs: [],
-      add(msg) {
-        this.logs.push(msg);
-        this.panel.textContent = this.logs.join('\n');
-        console.log(msg);
-      },
-      show() {
-        this.panel.classList.add('show');
-      }
-    };
-    
-    debug.show();
-    debug.add('🚀 Game starting...');
-
     // ============================================
     // === AUDIO SYSTEM
     // ============================================
@@ -284,10 +243,10 @@
         if (!this.ctx) {
           try {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            debug.add('✅ AudioContext created: ' + this.ctx.state);
+            console.log('✅ AudioContext created');
             return true;
           } catch (e) {
-            debug.add('❌ Audio init failed: ' + e.message);
+            console.error('❌ Audio init failed:', e);
             return false;
           }
         }
@@ -295,11 +254,7 @@
       }
       
       playMenuMusic() {
-        debug.add('🎵 Attempting menu music...');
-        if (!this.musicEnabled || !this.ctx || !this.enabled) {
-          debug.add('❌ Menu music blocked: music=' + this.musicEnabled + ', ctx=' + !!this.ctx + ', enabled=' + this.enabled);
-          return;
-        }
+        if (!this.musicEnabled || !this.ctx || !this.enabled) return;
         this.isMenuMusic = true;
         this.noteIndex = 0;
         
@@ -314,7 +269,7 @@
             gain.connect(this.ctx.destination);
             osc.frequency.value = freq;
             osc.type = 'sine';
-            gain.gain.setValueAtTime(this.volume * 0.1, this.ctx.currentTime);
+            gain.gain.setValueAtTime(this.volume * 0.15, this.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
             osc.start(this.ctx.currentTime);
             osc.stop(this.ctx.currentTime + 0.4);
@@ -325,7 +280,6 @@
         
         playNote();
         this.musicInterval = setInterval(playNote, 500);
-        debug.add('✅ Menu music started');
       }
       
       playGameMusic() {
@@ -342,7 +296,7 @@
           gain.connect(this.ctx.destination);
           osc.frequency.value = this.gameNotes[this.noteIndex];
           osc.type = 'sine';
-          gain.gain.setValueAtTime(this.volume * 0.15, this.ctx.currentTime);
+          gain.gain.setValueAtTime(this.volume * 0.2, this.ctx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
           osc.start(this.ctx.currentTime);
           osc.stop(this.ctx.currentTime + 0.3);
@@ -352,7 +306,6 @@
         
         playNote();
         this.musicInterval = setInterval(playNote, 400);
-        debug.add('🎮 Game music started');
       }
       
       stopMusic() {
@@ -437,17 +390,13 @@
     let vkReady = false;
     
     async function initVK() {
-      if (!bridge) {
-        debug.add('⚠️ VK Bridge not found');
-        return;
-      }
+      if (!bridge) return;
       try {
         await bridge.send('VKWebAppInit');
         vkReady = true;
-        debug.add('✅ VK Bridge initialized');
         await loadCloudData();
       } catch (e) {
-        debug.add('❌ VK error: ' + e.message);
+        console.warn('VK error:', e);
       }
     }
     initVK();
@@ -473,7 +422,7 @@
             })
           });
         } catch (e) {
-          debug.add('❌ Cloud save error: ' + e.message);
+          console.error('Cloud save error:', e);
         }
       }
       
@@ -488,10 +437,9 @@
           const data = JSON.parse(result.value);
           if (data.highScore > highScore) highScore = data.highScore;
           if (data.totalCoins > totalCoins) totalCoins = data.totalCoins;
-          debug.add('✅ Cloud data loaded');
         }
       } catch (e) {
-        debug.add('⚠️ No cloud save');
+        console.log('No cloud save');
       }
     }
 
@@ -521,122 +469,126 @@
     resize();
 
     // ============================================
-    // === ASSETS - WITH DETAILED DEBUG
+    // === ASSETS (coins and obstacles only)
     // ============================================
     const assets = {
-      playerRun: new Image(),
-      playerJump: new Image(),
       obstacle: new Image(),
       coin: new Image()
     };
 
     let assetsLoaded = 0;
-    const totalAssets = 4;
+    const totalAssets = 2;
 
     function loadAsset(name, src) {
-      debug.add(`📥 Loading ${name}: ${src}`);
-      
       assets[name].onload = () => {
         assetsLoaded++;
-        const status = `✅ ${name}: ${assets[name].naturalWidth}x${assets[name].naturalHeight}`;
-        debug.add(status);
-        
+        console.log(`✅ ${name}: ${assets[name].naturalWidth}x${assets[name].naturalHeight}`);
         if (assetsLoaded === totalAssets) {
-          debug.add('🎉 All assets loaded!');
           document.getElementById('loadingScreen').classList.remove('active');
         }
       };
-      
-      assets[name].onerror = (e) => {
+      assets[name].onerror = () => {
+        console.warn(`❌ ${src} failed`);
         assetsLoaded++;
-        const error = `❌ ${name} FAILED: ${src}`;
-        debug.add(error);
-        debug.add(`   Check: 1) File exists 2) Correct path 3) CORS headers`);
-        
         if (assetsLoaded === totalAssets) {
-          debug.add('⚠️ Some assets failed, using fallbacks');
           document.getElementById('loadingScreen').classList.remove('active');
         }
       };
-      
       assets[name].crossOrigin = 'anonymous';
       assets[name].src = src;
     }
 
-    loadAsset('playerRun', 'assets/player-run.png');
-    loadAsset('playerJump', 'assets/player-jump.png');
     loadAsset('obstacle', 'assets/obstacle.png');
     loadAsset('coin', 'assets/coin.png');
 
     // ============================================
-    // === ANIMATION - WITH FALLBACK
+    // === ANIMATED PLAYER CHARACTER (DRAWN)
     // ============================================
-    class Animator {
-      constructor(spriteSheet, frameW, frameH, frameCount, fps = 10) {
-        this.spriteSheet = spriteSheet;
-        this.frameW = frameW;
-        this.frameH = frameH;
-        this.frameCount = frameCount;
-        this.fps = fps;
-        this.frame = 0;
-        this.elapsedTime = 0;
-        this.frameDuration = 1000 / fps;
-      }
+    function drawPlayer(ctx, x, y, w, h, frame, isJumping) {
+      const time = Date.now() * 0.01;
+      const runCycle = isJumping ? 0 : Math.sin(frame * 0.5) * 0.3;
       
-      update(dt) {
-        this.elapsedTime += dt;
-        if (this.elapsedTime >= this.frameDuration) {
-          this.frame = (this.frame + 1) % this.frameCount;
-          this.elapsedTime = 0;
-        }
-      }
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath();
+      ctx.ellipse(x + w/2, y + h, w * 0.4, h * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
       
-      draw(ctx, x, y, w, h) {
-        if (this.spriteSheet.complete && this.spriteSheet.naturalWidth > 0) {
-          const sx = this.frame * this.frameW;
-          
-          if (sx + this.frameW <= this.spriteSheet.naturalWidth) {
-            ctx.drawImage(
-              this.spriteSheet,
-              sx, 0, this.frameW, this.frameH,
-              x, y, w, h
-            );
-          } else {
-            debug.add(`⚠️ Frame ${this.frame} out of bounds for ${this.spriteSheet.src}`);
-            this.drawFallback(ctx, x, y, w, h);
-          }
-        } else {
-          this.drawFallback(ctx, x, y, w, h);
-        }
-      }
+      // Body (orange shirt)
+      ctx.fillStyle = '#ff8c00';
+      ctx.fillRect(x + w * 0.25, y + h * 0.25, w * 0.5, h * 0.4);
       
-      drawFallback(ctx, x, y, w, h) {
-        // Animated character
-        const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'];
-        ctx.fillStyle = colors[Math.floor(Date.now() / 300) % colors.length];
-        ctx.fillRect(x, y, w, h);
-        
-        // Face
-        ctx.fillStyle = 'white';
-        ctx.fillRect(x + w * 0.6, y + h * 0.2, w * 0.2, h * 0.2);
-        ctx.fillStyle = 'black';
-        ctx.fillRect(x + w * 0.65, y + h * 0.25, w * 0.1, h * 0.1);
-        
-        // Legs
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        const legOffset = Math.sin(this.frame * 0.8) * 5;
-        ctx.fillRect(x + w * 0.2, y + h * 0.7 + legOffset, w * 0.25, h * 0.25);
-        ctx.fillRect(x + w * 0.55, y + h * 0.7 - legOffset, w * 0.25, h * 0.25);
-      }
+      // Shorts (dark blue)
+      ctx.fillStyle = '#1a1a4e';
+      ctx.fillRect(x + w * 0.25, y + h * 0.6, w * 0.5, h * 0.2);
       
-      reset() {
-        this.frame = 0;
-        this.elapsedTime = 0;
-      }
+      // Head
+      ctx.fillStyle = '#fdbcb4';
+      ctx.beginPath();
+      ctx.arc(x + w * 0.6, y + h * 0.15, w * 0.18, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Hair
+      ctx.fillStyle = '#1a1a2e';
+      ctx.beginPath();
+      ctx.arc(x + w * 0.6, y + h * 0.1, w * 0.18, Math.PI, 0);
+      ctx.fill();
+      ctx.fillRect(x + w * 0.42, y + h * 0.08, w * 0.18, w * 0.1);
+      
+      // Eye
+      ctx.fillStyle = 'white';
+      ctx.fillRect(x + w * 0.62, y + h * 0.12, w * 0.08, w * 0.08);
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(x + w * 0.66, y + h * 0.14, w * 0.04, w * 0.04);
+      
+      // Arms (animated)
+      ctx.strokeStyle = '#fdbcb4';
+      ctx.lineWidth = w * 0.08;
+      ctx.lineCap = 'round';
+      
+      // Left arm
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.3, y + h * 0.3);
+      ctx.lineTo(x + w * 0.15, y + h * 0.45 + Math.sin(time + frame) * h * 0.1);
+      ctx.stroke();
+      
+      // Right arm
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.7, y + h * 0.3);
+      ctx.lineTo(x + w * 0.85, y + h * 0.45 + Math.sin(time + frame + Math.PI) * h * 0.1);
+      ctx.stroke();
+      
+      // Legs (animated)
+      ctx.strokeStyle = '#fdbcb4';
+      ctx.lineWidth = w * 0.1;
+      
+      // Left leg
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.35, y + h * 0.75);
+      const leftKneeX = x + w * 0.3 + Math.sin(time + frame) * w * 0.1;
+      const leftKneeY = y + h * 0.85;
+      ctx.lineTo(leftKneeX, leftKneeY);
+      ctx.lineTo(x + w * 0.25 + Math.sin(time + frame) * w * 0.15, y + h * 0.95);
+      ctx.stroke();
+      
+      // Right leg
+      ctx.beginPath();
+      ctx.moveTo(x + w * 0.65, y + h * 0.75);
+      const rightKneeX = x + w * 0.7 + Math.sin(time + frame + Math.PI) * w * 0.1;
+      const rightKneeY = y + h * 0.85;
+      ctx.lineTo(rightKneeX, rightKneeY);
+      ctx.lineTo(x + w * 0.75 + Math.sin(time + frame + Math.PI) * w * 0.15, y + h * 0.95);
+      ctx.stroke();
+      
+      // Shoes
+      ctx.fillStyle = 'white';
+      ctx.beginPath();
+      ctx.ellipse(x + w * 0.25 + Math.sin(time + frame) * w * 0.15, y + h * 0.96, w * 0.12, h * 0.04, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x + w * 0.75 + Math.sin(time + frame + Math.PI) * w * 0.15, y + h * 0.96, w * 0.12, h * 0.04, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
-
-    const runAnim = new Animator(assets.playerRun, 64, 64, 8, 10);
-    const jumpAnim = new Animator(assets.playerJump, 64, 64, 2, 6);
 
     // ============================================
     // === GAME STATE
@@ -645,6 +597,7 @@
     let isPlaying = false, isPaused = false, isGameOver = false;
     let gameSpeed = 5;
     let lastTime = 0;
+    let animFrame = 0;
 
     let player = { x: 0, y: 0, w: 50, h: 60, vy: 0, grounded: true };
     let obstacles = [], coins = [], particles = [];
@@ -738,8 +691,7 @@
       particles = [];
       lastObstacleTime = 0;
       lastCoinTime = 0;
-      runAnim.reset();
-      jumpAnim.reset();
+      animFrame = 0;
     }
 
     function jump() {
@@ -820,10 +772,9 @@
         player.grounded = true;
       }
 
+      // Animation frame
       if (player.grounded) {
-        runAnim.update(dt);
-      } else {
-        jumpAnim.update(dt);
+        animFrame += gameSpeed * 0.1;
       }
 
       spawnObjects();
@@ -903,11 +854,8 @@
         }
       });
 
-      if (player.grounded) {
-        runAnim.draw(ctx, player.x, player.y, player.w, player.h);
-      } else {
-        jumpAnim.draw(ctx, player.x, player.y, player.w, player.h);
-      }
+      // FIXED: Draw animated player character
+      drawPlayer(ctx, player.x, player.y, player.w, player.h, animFrame, !player.grounded);
 
       particles.forEach(p => {
         ctx.globalAlpha = p.life;
@@ -931,9 +879,7 @@
     // === GAME CONTROL
     // ============================================
     function startGame() {
-      debug.add('▶ Starting game...');
       if (!audio.ctx) {
-        debug.add('🔊 Initializing audio...');
         audio.init();
       }
       audio.stopMusic();
@@ -955,8 +901,6 @@
       
       lastTime = performance.now();
       loop(lastTime);
-      
-      debug.add('✅ Game started');
     }
 
     function pauseGame() {
@@ -1130,16 +1074,12 @@
     function initAudioAndMusic() {
       if (audioInitialized) return;
       audioInitialized = true;
-      debug.add('🎵 First interaction detected');
-      if (audio.init()) {
-        audio.playMenuMusic();
-      }
+      audio.init();
+      audio.playMenuMusic();
     }
     
     document.addEventListener('click', initAudioAndMusic, { once: true });
     document.addEventListener('touchstart', initAudioAndMusic, { once: true });
-    
-    debug.add('🎮 Game initialized, waiting for click...');
   </script>
 </body>
 </html>
