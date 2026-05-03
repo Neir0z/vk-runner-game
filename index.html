@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>VK Runner</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden; background: #1a1a2e;
+      touch-action: none; -webkit-user-select: none; user-select: none;
+      font-family: system-ui, sans-serif; color: #fff;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+    .ui {
+      position: absolute; top: 20px; left: 20px; right: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      pointer-events: none; z-index: 10;
+    }
+    .score { font-size: 1.5rem; font-weight: bold; text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+    .overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.75);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      gap: 15px; z-index: 20;
+    }
+    .overlay.active { display: flex; }
+    .btn {
+      padding: 14px 28px; font-size: 1.1rem; border: none; border-radius: 10px;
+      cursor: pointer; transition: transform 0.1s;
+    }
+    .btn:active { transform: scale(0.95); }
+    .start { background: #4a76a8; color: white; }
+    .ad { background: #5c9e31; color: white; font-size: 0.95rem; }
+    .hint { font-size: 0.85rem; color: #aaa; margin-top: 5px; text-align: center; max-width: 80%; }
+  </style>
+</head>
+<body>
+
+  <canvas id="game"></canvas>
+
+  <div class="ui">
+    <div class="score">🏆 <span id="score">0</span></div>
+  </div>
+
+  <div class="overlay" id="startScreen">
+    <h1>🏃 VK Runner</h1>
+    <button class="btn start" id="startBtn">Играть</button>
+    <p class="hint">Нажми или тапни, чтобы прыгнуть. Избегай препятствий.</p>
+  </div>
+
+  <div class="overlay" id="gameOverScreen">
+    <h2>💥 Игра окончена</h2>
+    <p>Счёт: <span id="finalScore">0</span> | Рекорд: <span id="highScore">0</span></p>
+    <button class="btn start" id="restartBtn">Заново</button>
+    <button class="btn ad" id="adBtn">📺 Реклама +50 очков</button>
+    <p class="hint">Реклама работает только внутри приложения ВКонтакте</p>
+  </div>
+
+  <!-- VK Bridge -->
+  <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+  <script>
+    // === ИНИЦИАЛИЗАЦИЯ VK BRIDGE ===
+    const bridge = window.vkBridge;
+    let vkReady = false;
+    if (bridge) {
+      bridge.send('VKWebAppInit')
+        .then(() => { vkReady = true; console.log('VK Bridge OK'); })
+        .catch(console.error);
+    }
+
+    // === НАСТРОЙКА CANVAS ===
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let dpr = window.devicePixelRatio || 1;
+    let W, H;
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      floorY = H * 0.85;
+    }
+    window.addEventListener('resize', resize);
+    let floorY = H * 0.85;
+    resize();
+
+    // === ИГРОВЫЕ ПЕРЕМЕННЫЕ ===
+    let score = 0, highScore = parseInt(localStorage.getItem('vk_runner_hs') || '0');
+    let isPlaying = false, isGameOver = false;
+    let speed = 4;
+    const gravity = 0.6;
+    let player = { x: W * 0.2, y: floorY - 40, w: 40, h: 40, vy: 0, grounded: true };
+    let obstacles = [];
+    let lastObstacleTime = 0;
+    let animId;
+
+    // === ЗАГРУЗКА АССЕТОВ (ЗДЕСЬ ВСТАВЛЯЙ СВОИ КАРТИНКИ) ===
+    const playerImg = new Image();
+    // playerImg.src = 'assets/player.png'; // Раскомментируй, когда добавишь файл
+    const obstacleImg = new Image();
+    // obstacleImg.src = 'assets/obstacle.png';
+
+    // === УПРАВЛЕНИЕ ===
+    function jump() {
+      if (!isPlaying || isGameOver) return;
+      if (player.grounded) {
+        player.vy = -12;
+        player.grounded = false;
+      }
+    }
+    window.addEventListener('keydown', e => { if (e.code === 'Space') jump(); });
+    window.addEventListener('mousedown', jump);
+    window.addEventListener('touchstart', e => { e.preventDefault(); jump(); }, { passive: false });
+
+    // === ЛОГИКА ===
+    function spawnObstacle() {
+      const now = performance.now();
+      if (now - lastObstacleTime > 1000 + Math.random() * 1500) {
+        const w = 30 + Math.random() * 20;
+        const h = 30 + Math.random() * 40;
+        obstacles.push({ x: W, y: floorY - h, w, h });
+        lastObstacleTime = now;
+      }
+    }
+
+    function update() {
+      if (!isPlaying || isGameOver) return;
+
+      // Игрок
+      player.vy += gravity;
+      player.y += player.vy;
+      if (player.y + player.h >= floorY) {
+        player.y = floorY - player.h;
+        player.vy = 0;
+        player.grounded = true;
+      }
+
+      // Препятствия
+      spawnObstacle();
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        let o = obstacles[i];
+        o.x -= speed;
+        if (o.x + o.w < 0) obstacles.splice(i, 1);
+
+        // Коллизия (упрощённая)
+        if (player.x < o.x + o.w &&
+            player.x + player.w > o.x &&
+            player.y < o.y + o.h &&
+            player.y + player.h > o.y) {
+          gameOver();
+        }
+      }
+
+      // Сложность и счёт
+      score += 0.1;
+      speed = 4 + Math.floor(score / 50) * 0.5;
+      document.getElementById('score').textContent = Math.floor(score);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Земля
+      ctx.fillStyle = '#2d2d44';
+      ctx.fillRect(0, floorY, W, H - floorY);
+
+      // Игрок (замени на ctx.drawImage(playerImg, ...) когда добавишь спрайт)
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+
+      // Препятствия (замени на ctx.drawImage(obstacleImg, ...))
+      ctx.fillStyle = '#4ecdc4';
+      obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+    }
+
+    function loop() {
+      update();
+      draw();
+      animId = requestAnimationFrame(loop);
+    }
+
+    // === СОСТОЯНИЯ ИГРЫ ===
+    function startGame() {
+      isPlaying = true;
+      isGameOver = false;
+      score = 0;
+      speed = 4;
+      player.y = floorY - player.h;
+      player.vy = 0;
+      player.grounded = true;
+      obstacles = [];
+      document.getElementById('startScreen').classList.remove('active');
+      document.getElementById('gameOverScreen').classList.remove('active');
+      loop();
+      if (bridge) bridge.send('VKWebAppTrackEvent', { event_name: 'game_start' });
+    }
+
+    function gameOver() {
+      isPlaying = false;
+      isGameOver = true;
+      cancelAnimationFrame(animId);
+      document.getElementById('finalScore').textContent = Math.floor(score);
+      if (Math.floor(score) > highScore) {
+        highScore = Math.floor(score);
+        localStorage.setItem('vk_runner_hs', highScore);
+      }
+      document.getElementById('highScore').textContent = highScore;
+      document.getElementById('gameOverScreen').classList.add('active');
+      if (bridge) bridge.send('VKWebAppTrackEvent', { event_name: 'game_over', score: Math.floor(score) });
+    }
+
+    // === РЕКЛАМА ===
+    document.getElementById('adBtn').addEventListener('click', async () => {
+      if (!vkReady) { alert('VK Bridge не подключён. Запусти игру внутри ВКонтакте.'); return; }
+      try {
+        const res = await bridge.send('VKWebAppShowNativeAds', {
+          ad_type: 'reward',
+          ad_format: 'reward_video'
+        });
+        if (res?.result) {
+          score += 50;
+          document.getElementById('score').textContent = Math.floor(score);
+          alert('Реклама просмотрена! +50 очков');
+          if (Math.floor(score) > highScore) {
+            highScore = Math.floor(score);
+            localStorage.setItem('vk_runner_hs', highScore);
+          }
+        }
+      } catch (e) {
+        console.warn('Реклама не показана:', e);
+        alert('Реклама временно недоступна');
+      }
+    });
+
+    // === ПРИВЯЗКА КНОПОК ===
+    document.getElementById('startBtn').addEventListener('click', startGame);
+    document.getElementById('restartBtn').addEventListener('click', startGame);
+
+    // Показ стартового экрана
+    document.getElementById('startScreen').classList.add('active');
+  </script>
+</body>
+</html>
