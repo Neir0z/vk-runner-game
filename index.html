@@ -14,76 +14,43 @@
     canvas { display: block; width: 100%; height: 100%; }
     
     .ui {
-      position: absolute; 
-      top: 10px; 
-      left: 10px; 
-      right: 10px;
-      display: flex; 
-      justify-content: space-between; 
-      align-items: flex-start;
-      pointer-events: none; 
-      z-index: 100;
+      position: absolute; top: 10px; left: 10px; right: 10px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      pointer-events: none; z-index: 100;
     }
     
     .score-box {
-      background: rgba(0,0,0,0.8); 
-      padding: 12px 18px; 
-      border-radius: 12px;
-      border: 2px solid rgba(255,255,255,0.2);
-      pointer-events: auto;
+      background: rgba(0,0,0,0.8); padding: 12px 18px; border-radius: 12px;
+      border: 2px solid rgba(255,255,255,0.2); pointer-events: auto;
     }
     
     .score { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
     .coins { font-size: 1.2rem; color: #ffd700; }
     
-    .controls {
-      display: flex; 
-      gap: 10px; 
-      pointer-events: auto;
-    }
+    .controls { display: flex; gap: 10px; pointer-events: auto; }
     
     .btn-small {
-      background: rgba(255,255,255,0.25); 
-      border: 2px solid rgba(255,255,255,0.4);
-      color: white;
-      padding: 12px 16px; 
-      border-radius: 10px; 
-      cursor: pointer;
-      font-size: 1.4rem; 
-      transition: all 0.2s;
-      min-width: 50px;
+      background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.4);
+      color: white; padding: 12px 16px; border-radius: 10px; cursor: pointer;
+      font-size: 1.4rem; transition: all 0.2s; min-width: 50px;
     }
     
-    .btn-small:hover { 
-      background: rgba(255,255,255,0.35); 
-      transform: scale(1.1); 
-    }
-    
+    .btn-small:hover { background: rgba(255,255,255,0.35); transform: scale(1.1); }
     .btn-small:active { transform: scale(0.95); }
     .btn-small.muted { background: rgba(255,80,80,0.5); border-color: rgba(255,80,80,0.8); }
     
     .overlay {
-      position: absolute; 
-      inset: 0; 
-      background: rgba(0,0,0,0.95);
-      display: none; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center;
-      gap: 20px; 
-      z-index: 200; 
-      padding: 20px;
+      position: absolute; inset: 0; background: rgba(0,0,0,0.95);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      gap: 20px; z-index: 200; padding: 20px;
     }
     
     .overlay.active { display: flex; }
     
     .menu-title {
-      font-size: 3rem; 
-      font-weight: bold; 
-      margin-bottom: 15px;
+      font-size: 3rem; font-weight: bold; margin-bottom: 15px;
       background: linear-gradient(135deg, #4a76a8, #7ec850, #ffd700);
-      -webkit-background-clip: text; 
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: glow 2s ease-in-out infinite;
     }
     
@@ -93,14 +60,8 @@
     }
     
     .btn {
-      padding: 16px 40px; 
-      font-size: 1.2rem; 
-      border: none; 
-      border-radius: 12px;
-      cursor: pointer; 
-      transition: all 0.2s; 
-      font-weight: bold;
-      min-width: 280px;
+      padding: 16px 40px; font-size: 1.2rem; border: none; border-radius: 12px;
+      cursor: pointer; transition: all 0.2s; font-weight: bold; min-width: 280px;
     }
     
     .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
@@ -108,61 +69,42 @@
     
     .btn-primary {
       background: linear-gradient(135deg, #4a76a8, #6b9bd1);
-      color: white; 
-      border: 2px solid rgba(255,255,255,0.2);
+      color: white; border: 2px solid rgba(255,255,255,0.2);
     }
     
     .btn-warning {
       background: linear-gradient(135deg, #f39c12, #f1c40f);
-      color: #000; 
-      border: 2px solid rgba(255,255,255,0.2);
+      color: #000; border: 2px solid rgba(255,255,255,0.2);
     }
     
     .btn-danger {
       background: linear-gradient(135deg, #e74c3c, #c0392b);
-      color: white; 
-      border: 2px solid rgba(255,255,255,0.2);
+      color: white; border: 2px solid rgba(255,255,255,0.2);
     }
     
     .btn-secondary {
       background: rgba(255,255,255,0.15);
-      color: white; 
-      border: 2px solid rgba(255,255,255,0.3);
+      color: white; border: 2px solid rgba(255,255,255,0.3);
     }
     
-    .hint { 
-      font-size: 0.95rem; 
-      color: #aaa; 
-      text-align: center; 
-      max-width: 90%;
-      line-height: 1.6; 
-      margin-top: 10px;
-    }
+    .hint { font-size: 0.95rem; color: #aaa; text-align: center; max-width: 90%; line-height: 1.6; margin-top: 10px; }
     
     .menu-stats {
-      background: rgba(255,255,255,0.1); 
-      padding: 25px 35px;
-      border-radius: 12px; 
-      margin: 10px 0; 
-      text-align: center;
+      background: rgba(255,255,255,0.1); padding: 25px 35px;
+      border-radius: 12px; margin: 10px 0; text-align: center;
       border: 2px solid rgba(255,255,255,0.1);
     }
     
     .stat-row {
-      display: flex; 
-      justify-content: space-between; 
-      gap: 40px;
-      margin: 10px 0; 
-      font-size: 1.1rem;
+      display: flex; justify-content: space-between; gap: 40px;
+      margin: 10px 0; font-size: 1.1rem;
     }
     
     .stat-label { color: #aaa; }
     .stat-value { color: #ffd700; font-weight: bold; font-size: 1.3rem; }
     
     .loading {
-      color: #7ec850; 
-      font-size: 1.5rem; 
-      font-weight: bold;
+      color: #7ec850; font-size: 1.5rem; font-weight: bold;
       animation: pulse 1s infinite;
     }
     
@@ -172,35 +114,21 @@
     }
     
     .pause-menu {
-      position: absolute; 
-      top: 50%; 
-      left: 50%;
+      position: absolute; top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.98); 
-      padding: 40px;
-      border-radius: 16px; 
-      border: 2px solid rgba(255,255,255,0.2);
-      display: none; 
-      flex-direction: column; 
-      align-items: center; 
-      gap: 15px;
-      z-index: 150; 
-      min-width: 300px;
+      background: rgba(0,0,0,0.98); padding: 40px;
+      border-radius: 16px; border: 2px solid rgba(255,255,255,0.2);
+      display: none; flex-direction: column; align-items: center; gap: 15px;
+      z-index: 150; min-width: 300px;
     }
     
     .pause-menu.active { display: flex; }
     
     .save-indicator {
-      position: absolute; 
-      bottom: 20px; 
-      right: 20px;
-      background: rgba(126,200,80,0.95); 
-      color: white;
-      padding: 12px 18px; 
-      border-radius: 10px;
-      font-size: 1rem; 
-      display: none; 
-      animation: slideIn 0.3s;
+      position: absolute; bottom: 20px; right: 20px;
+      background: rgba(126,200,80,0.95); color: white;
+      padding: 12px 18px; border-radius: 10px;
+      font-size: 1rem; display: none; animation: slideIn 0.3s;
       z-index: 300;
     }
     
@@ -210,11 +138,33 @@
       from { transform: translateX(400px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
+    
+    /* Debug panel */
+    .debug-panel {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.9);
+      color: #0f0;
+      padding: 10px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 12px;
+      max-width: 400px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .debug-panel.show { display: block; }
   </style>
 </head>
 <body>
 
   <canvas id="game"></canvas>
+  
+  <div class="debug-panel" id="debugPanel"></div>
 
   <div class="ui" id="gameUI" style="display: none;">
     <div class="score-box">
@@ -287,13 +237,32 @@
   </div>
 
   <div class="overlay" id="loadingScreen">
-    <div class="loading">Загрузка...</div>
+    <div class="loading">Загрузка...<br><small style="color: #aaa; font-size: 0.8rem;">Проверь консоль (F12)</small></div>
   </div>
 
   <div class="save-indicator" id="saveIndicator">💾 Сохранено!</div>
 
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <script>
+    // ============================================
+    // === DEBUG SYSTEM
+    // ============================================
+    const debug = {
+      panel: document.getElementById('debugPanel'),
+      logs: [],
+      add(msg) {
+        this.logs.push(msg);
+        this.panel.textContent = this.logs.join('\n');
+        console.log(msg);
+      },
+      show() {
+        this.panel.classList.add('show');
+      }
+    };
+    
+    debug.show();
+    debug.add('🚀 Game starting...');
+
     // ============================================
     // === AUDIO SYSTEM
     // ============================================
@@ -315,16 +284,22 @@
         if (!this.ctx) {
           try {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-            console.log('✅ AudioContext created');
+            debug.add('✅ AudioContext created: ' + this.ctx.state);
+            return true;
           } catch (e) {
-            console.error('❌ Audio init failed:', e);
+            debug.add('❌ Audio init failed: ' + e.message);
+            return false;
           }
         }
-        return this.ctx !== null;
+        return true;
       }
       
       playMenuMusic() {
-        if (!this.musicEnabled || !this.ctx || !this.enabled) return;
+        debug.add('🎵 Attempting menu music...');
+        if (!this.musicEnabled || !this.ctx || !this.enabled) {
+          debug.add('❌ Menu music blocked: music=' + this.musicEnabled + ', ctx=' + !!this.ctx + ', enabled=' + this.enabled);
+          return;
+        }
         this.isMenuMusic = true;
         this.noteIndex = 0;
         
@@ -350,6 +325,7 @@
         
         playNote();
         this.musicInterval = setInterval(playNote, 500);
+        debug.add('✅ Menu music started');
       }
       
       playGameMusic() {
@@ -376,6 +352,7 @@
         
         playNote();
         this.musicInterval = setInterval(playNote, 400);
+        debug.add('🎮 Game music started');
       }
       
       stopMusic() {
@@ -460,13 +437,17 @@
     let vkReady = false;
     
     async function initVK() {
-      if (!bridge) return;
+      if (!bridge) {
+        debug.add('⚠️ VK Bridge not found');
+        return;
+      }
       try {
         await bridge.send('VKWebAppInit');
         vkReady = true;
+        debug.add('✅ VK Bridge initialized');
         await loadCloudData();
       } catch (e) {
-        console.warn('VK error:', e);
+        debug.add('❌ VK error: ' + e.message);
       }
     }
     initVK();
@@ -492,7 +473,7 @@
             })
           });
         } catch (e) {
-          console.error('Cloud save error:', e);
+          debug.add('❌ Cloud save error: ' + e.message);
         }
       }
       
@@ -507,9 +488,10 @@
           const data = JSON.parse(result.value);
           if (data.highScore > highScore) highScore = data.highScore;
           if (data.totalCoins > totalCoins) totalCoins = data.totalCoins;
+          debug.add('✅ Cloud data loaded');
         }
       } catch (e) {
-        console.log('No cloud save');
+        debug.add('⚠️ No cloud save');
       }
     }
 
@@ -539,7 +521,7 @@
     resize();
 
     // ============================================
-    // === ASSETS
+    // === ASSETS - WITH DETAILED DEBUG
     // ============================================
     const assets = {
       playerRun: new Image(),
@@ -552,23 +534,33 @@
     const totalAssets = 4;
 
     function loadAsset(name, src) {
+      debug.add(`📥 Loading ${name}: ${src}`);
+      
       assets[name].onload = () => {
         assetsLoaded++;
-        console.log(`✅ ${name}: ${assets[name].naturalWidth}x${assets[name].naturalHeight}`);
+        const status = `✅ ${name}: ${assets[name].naturalWidth}x${assets[name].naturalHeight}`;
+        debug.add(status);
+        
         if (assetsLoaded === totalAssets) {
+          debug.add('🎉 All assets loaded!');
           document.getElementById('loadingScreen').classList.remove('active');
         }
       };
-      assets[name].onerror = () => {
-        console.warn(`❌ ${src} failed`);
+      
+      assets[name].onerror = (e) => {
         assetsLoaded++;
+        const error = `❌ ${name} FAILED: ${src}`;
+        debug.add(error);
+        debug.add(`   Check: 1) File exists 2) Correct path 3) CORS headers`);
+        
         if (assetsLoaded === totalAssets) {
+          debug.add('⚠️ Some assets failed, using fallbacks');
           document.getElementById('loadingScreen').classList.remove('active');
         }
       };
-      assets[name].src = src;
-      // Force cross-origin loading
+      
       assets[name].crossOrigin = 'anonymous';
+      assets[name].src = src;
     }
 
     loadAsset('playerRun', 'assets/player-run.png');
@@ -577,7 +569,7 @@
     loadAsset('coin', 'assets/coin.png');
 
     // ============================================
-    // === ANIMATION - FIXED
+    // === ANIMATION - WITH FALLBACK
     // ============================================
     class Animator {
       constructor(spriteSheet, frameW, frameH, frameCount, fps = 10) {
@@ -600,12 +592,9 @@
       }
       
       draw(ctx, x, y, w, h) {
-        // FIXED: Completely removed debug text
-        
         if (this.spriteSheet.complete && this.spriteSheet.naturalWidth > 0) {
           const sx = this.frame * this.frameW;
           
-          // Check bounds
           if (sx + this.frameW <= this.spriteSheet.naturalWidth) {
             ctx.drawImage(
               this.spriteSheet,
@@ -613,7 +602,7 @@
               x, y, w, h
             );
           } else {
-            // Fallback if frame out of bounds
+            debug.add(`⚠️ Frame ${this.frame} out of bounds for ${this.spriteSheet.src}`);
             this.drawFallback(ctx, x, y, w, h);
           }
         } else {
@@ -622,7 +611,7 @@
       }
       
       drawFallback(ctx, x, y, w, h) {
-        // Animated character with colors
+        // Animated character
         const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4'];
         ctx.fillStyle = colors[Math.floor(Date.now() / 300) % colors.length];
         ctx.fillRect(x, y, w, h);
@@ -633,7 +622,7 @@
         ctx.fillStyle = 'black';
         ctx.fillRect(x + w * 0.65, y + h * 0.25, w * 0.1, h * 0.1);
         
-        // Legs animation
+        // Legs
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         const legOffset = Math.sin(this.frame * 0.8) * 5;
         ctx.fillRect(x + w * 0.2, y + h * 0.7 + legOffset, w * 0.25, h * 0.25);
@@ -663,14 +652,14 @@
     let animId;
 
     // ============================================
-    // === BACKGROUND - ULTRA SMOOTH
+    // === BACKGROUND
     // ============================================
     let bgOffset1 = 0, bgOffset2 = 0;
     
     function drawBackground() {
       ctx.clearRect(0, 0, W, H);
       
-      // Sky gradient
+      // Sky
       const skyGrad = ctx.createLinearGradient(0, 0, 0, floorY);
       skyGrad.addColorStop(0, '#0f0c29');
       skyGrad.addColorStop(0.5, '#302b63');
@@ -689,51 +678,44 @@
       }
       ctx.globalAlpha = 1;
       
-      // Mountains - ULTRA SMOOTH with pixel-perfect rendering
+      // Mountains
       bgOffset1 -= gameSpeed * 0.15;
       if (bgOffset1 <= -W) bgOffset1 = 0;
       
       ctx.fillStyle = '#1a1a2e';
       ctx.beginPath();
       ctx.moveTo(0, floorY);
-      
-      // FIXED: Smoother mountains using smaller steps and better interpolation
-      const step = 0.5; // Half-pixel steps for ultra smooth
-      for (let x = 0; x <= W; x += step) {
+      for (let x = 0; x <= W; x += 0.5) {
         const mountainY = floorY - 50 - Math.abs(Math.sin((x + bgOffset1) * 0.008)) * 100;
         ctx.lineTo(x, mountainY);
       }
       ctx.lineTo(W, floorY);
-      ctx.closePath();
       ctx.fill();
       
-      // Hills - SMOOTH
+      // Hills
       bgOffset2 -= gameSpeed * 0.4;
       if (bgOffset2 <= -W) bgOffset2 = 0;
       
       ctx.fillStyle = '#2d5a3d';
       ctx.beginPath();
       ctx.moveTo(0, floorY);
-      
-      for (let x = 0; x <= W; x += step) {
+      for (let x = 0; x <= W; x += 0.5) {
         const hillY = floorY - 25 - Math.abs(Math.sin((x + bgOffset2) * 0.012)) * 50;
         ctx.lineTo(x, hillY);
       }
       ctx.lineTo(W, floorY);
-      ctx.closePath();
       ctx.fill();
       
       // Ground
       ctx.fillStyle = '#1a4a1a';
       ctx.fillRect(0, floorY, W, H - floorY);
       
-      // Grass top
+      // Grass
       ctx.fillStyle = '#4a9a4a';
       ctx.fillRect(0, floorY, W, 8);
       
-      // Animated grass details
-      ctx.fillStyle = '#3d8a3d';
       const time = Date.now() * 0.001;
+      ctx.fillStyle = '#3d8a3d';
       for (let x = 0; x < W; x += 15) {
         const h = 5 + Math.sin(x * 0.1 + time) * 3;
         ctx.fillRect(x, floorY - h, 2, h);
@@ -916,13 +898,11 @@
         } else {
           ctx.fillStyle = o.color || '#7f8c8d';
           ctx.fillRect(o.x, o.y, o.w, o.h);
-          // Detail
           ctx.fillStyle = 'rgba(0,0,0,0.2)';
           ctx.fillRect(o.x + 5, o.y + 5, o.w - 10, o.h - 10);
         }
       });
 
-      // FIXED: No debug mode
       if (player.grounded) {
         runAnim.draw(ctx, player.x, player.y, player.w, player.h);
       } else {
@@ -951,7 +931,9 @@
     // === GAME CONTROL
     // ============================================
     function startGame() {
+      debug.add('▶ Starting game...');
       if (!audio.ctx) {
+        debug.add('🔊 Initializing audio...');
         audio.init();
       }
       audio.stopMusic();
@@ -973,6 +955,8 @@
       
       lastTime = performance.now();
       loop(lastTime);
+      
+      debug.add('✅ Game started');
     }
 
     function pauseGame() {
@@ -1146,12 +1130,16 @@
     function initAudioAndMusic() {
       if (audioInitialized) return;
       audioInitialized = true;
-      audio.init();
-      audio.playMenuMusic();
+      debug.add('🎵 First interaction detected');
+      if (audio.init()) {
+        audio.playMenuMusic();
+      }
     }
     
     document.addEventListener('click', initAudioAndMusic, { once: true });
     document.addEventListener('touchstart', initAudioAndMusic, { once: true });
+    
+    debug.add('🎮 Game initialized, waiting for click...');
   </script>
 </body>
 </html>
