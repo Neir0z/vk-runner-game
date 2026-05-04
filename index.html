@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VK Runner Pro</title>
+  <title>VK Runner Pro - Enhanced</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -11,7 +11,7 @@
       touch-action: none; -webkit-user-select: none; user-select: none;
       font-family: 'Segoe UI', system-ui, sans-serif; color: #fff;
     }
-    canvas { display: block; width: 100%; height: 100%; }
+    canvas { display: block; width: 100%; height: 100%; filter: contrast(1.1) saturate(1.2); }
     
     .ui {
       position: absolute; top: 10px; left: 10px; right: 10px;
@@ -20,18 +20,33 @@
     }
     
     .score-box {
-      background: rgba(0,0,0,0.8); padding: 12px 18px; border-radius: 12px;
-      border: 2px solid rgba(255,255,255,0.2); pointer-events: auto;
+      background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(20,20,40,0.9));
+      padding: 15px 20px; border-radius: 15px;
+      border: 2px solid rgba(255,255,255,0.3);
+      pointer-events: auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
     
-    .score { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
-    .coins { font-size: 1.2rem; color: #ffd700; }
+    .score { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+    .coins { font-size: 1.2rem; color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.6); }
+    .combo { 
+      font-size: 1rem; color: #ff6b6b; 
+      animation: comboPulse 0.5s ease-out;
+      display: none;
+    }
+    .combo.show { display: block; }
+    @keyframes comboPulse {
+      0% { transform: scale(1.5); opacity: 0; }
+      50% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
     
     .controls { display: flex; gap: 10px; pointer-events: auto; }
     .btn-small {
       background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.4);
       color: white; padding: 12px 16px; border-radius: 10px; cursor: pointer;
       font-size: 1.4rem; transition: all 0.2s; min-width: 50px;
+      backdrop-filter: blur(5px);
     }
     .btn-small:hover { background: rgba(255,255,255,0.35); transform: scale(1.1); }
     .btn-small:active { transform: scale(0.95); }
@@ -48,13 +63,23 @@
       background: linear-gradient(135deg, #4a76a8, #7ec850, #ffd700);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: glow 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(126,200,80,0.5));
     }
-    @keyframes glow { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.3); } }
+    @keyframes glow { 0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(126,200,80,0.5)); } 50% { filter: brightness(1.3) drop-shadow(0 0 30px rgba(126,200,80,0.8)); } }
     
     .btn {
       padding: 16px 40px; font-size: 1.2rem; border: none; border-radius: 12px;
-      cursor: pointer; transition: all 0.2s; font-weight: bold; min-width: 280px;
+      cursor: pointer; transition: all 0.3s; font-weight: bold; min-width: 280px;
+      position: relative; overflow: hidden;
     }
+    .btn::before {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      width: 0; height: 0; border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    .btn:hover::before { width: 300px; height: 300px; }
     .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
     .btn:active { transform: translateY(-1px); }
     
@@ -62,45 +87,58 @@
     .btn-warning { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #000; border: 2px solid rgba(255,255,255,0.2); }
     .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: 2px solid rgba(255,255,255,0.2); }
     .btn-success { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: 2px solid rgba(255,255,255,0.2); }
-    .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 2px solid rgba(255,255,255,0.3); }
+    .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px); }
     
     .hint { font-size: 0.95rem; color: #aaa; text-align: center; max-width: 90%; line-height: 1.6; margin-top: 10px; }
-    .menu-stats { background: rgba(255,255,255,0.1); padding: 25px 35px; border-radius: 12px; margin: 10px 0; text-align: center; border: 2px solid rgba(255,255,255,0.1); }
+    .menu-stats { background: rgba(255,255,255,0.1); padding: 25px 35px; border-radius: 12px; margin: 10px 0; text-align: center; border: 2px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
     .stat-row { display: flex; justify-content: space-between; gap: 40px; margin: 10px 0; font-size: 1.1rem; }
     .stat-label { color: #aaa; }
-    .stat-value { color: #ffd700; font-weight: bold; font-size: 1.3rem; }
+    .stat-value { color: #ffd700; font-weight: bold; font-size: 1.3rem; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
     
     .loading { color: #7ec850; font-size: 1.5rem; font-weight: bold; animation: pulse 1s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.95); } }
     
-    .pause-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.98); padding: 40px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.2); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 150; min-width: 300px; }
+    .pause-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.98); padding: 40px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.2); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 150; min-width: 300px; backdrop-filter: blur(10px); }
     .pause-menu.active { display: flex; }
-    .save-indicator { position: absolute; bottom: 20px; right: 20px; background: rgba(126,200,80,0.95); color: white; padding: 12px 18px; border-radius: 10px; font-size: 1rem; display: none; animation: slideIn 0.3s; z-index: 300; }
+    .save-indicator { position: absolute; bottom: 20px; right: 20px; background: rgba(126,200,80,0.95); color: white; padding: 12px 18px; border-radius: 10px; font-size: 1rem; display: none; animation: slideIn 0.3s; z-index: 300; box-shadow: 0 4px 15px rgba(126,200,80,0.4); }
     .save-indicator.show { display: block; }
     @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     
     .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; max-width: 400px; }
-    .shop-item { background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.2s; text-align: center; }
-    .shop-item:hover { transform: scale(1.05); background: rgba(255,255,255,0.15); }
-    .shop-item-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .shop-item { background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.3s; text-align: center; backdrop-filter: blur(5px); }
+    .shop-item:hover { transform: scale(1.05) rotate(2deg); background: rgba(255,255,255,0.15); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .shop-item:active { transform: scale(0.98); }
+    .shop-item-icon { font-size: 2.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.3)); }
     .shop-item-name { font-weight: bold; margin-bottom: 5px; }
-    .shop-item-price { color: #ffd700; font-size: 0.9rem; }
+    .shop-item-price { color: #ffd700; font-size: 0.9rem; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
     
-    .mission-item { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin: 10px 0; width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; }
+    .mission-item { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin: 10px 0; width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(5px); }
     .mission-info { text-align: left; flex: 1; }
     .mission-title { font-weight: bold; margin-bottom: 5px; }
     .mission-progress { font-size: 0.85rem; color: #aaa; }
-    .mission-reward { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    .mission-reward { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+    .mission-reward:hover { transform: scale(1.05); }
     .mission-reward.claimed { background: #27ae60; color: white; cursor: default; }
     .revive-container { text-align: center; margin: 20px 0; }
-    .revive-timer { font-size: 2rem; color: #e74c3c; margin: 10px 0; }
+    .revive-timer { font-size: 2rem; color: #e74c3c; margin: 10px 0; animation: pulse 1s infinite; }
     
     .record-flash {
-      position: absolute; inset: 0; background: rgba(255, 215, 0, 0.3);
+      position: absolute; inset: 0; 
+      background: radial-gradient(circle, rgba(255,215,0,0.4) 0%, rgba(255,215,0,0) 70%);
       pointer-events: none; display: none; z-index: 50;
-      animation: flashAnim 0.5s forwards;
+      animation: flashAnim 1s ease-out;
     }
     @keyframes flashAnim { from { opacity: 1; } to { opacity: 0; } }
+    
+    .particle {
+      position: absolute; pointer-events: none;
+      border-radius: 50%;
+      animation: particleFade 1s ease-out forwards;
+    }
+    @keyframes particleFade {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0); opacity: 0; }
+    }
   </style>
 </head>
 <body>
@@ -112,6 +150,7 @@
     <div class="score-box">
       <div class="score">🏆 <span id="score">0</span></div>
       <div class="coins">💰 <span id="coins">0</span> (всего: <span id="totalCoins">0</span>)</div>
+      <div class="combo" id="combo">🔥 x<span id="comboValue">2</span></div>
     </div>
     <div class="controls">
       <button class="btn-small" id="soundBtn">🔊</button>
@@ -126,7 +165,7 @@
     <button class="btn btn-secondary" id="shopBtn">🛒 Магазин</button>
     <button class="btn btn-secondary" id="missionsBtn">📋 Задания</button>
     <button class="btn btn-secondary" id="settingsBtn">⚙️ Настройки</button>
-    <p class="hint">Управление: Пробел / Клик / Тап<br>Собирай монеты 💰, избегай камней 🪨 и мышей 🦇</p>
+    <p class="hint">Управление: Пробел / Клик / Тап<br>Собирай монеты 💰, избегай препятствий 🪨</p>
   </div>
 
   <div class="pause-menu" id="pauseMenu">
@@ -292,93 +331,71 @@
     };
     
     const shopItems = {
-  magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable' },
-  shield: { name: 'Щит', icon: '🛡️', price: 50, type: 'consumable' }
-};
-
-  function openShop() {
-  const shopCoinsEl = document.getElementById('shopCoins');
-  const shopGridEl = document.getElementById('shopGrid');
-  if (!shopCoinsEl || !shopGridEl) return;
-  
-  shopCoinsEl.textContent = totalCoins;
-  shopGridEl.innerHTML = '';
-  
-  // СКИНЫ
-  Object.keys(skins).forEach(id => {
-    const skin = skins[id]; const owned = ownedSkins.includes(id); const selected = selectedSkin === id;
-    const item = document.createElement('div'); item.className = 'shop-item';
-    item.innerHTML = `<div class="shop-item-icon" style="background:${skin.color};border-radius:8px"></div><div class="shop-item-name">${skin.name}</div><div class="shop-item-price">${owned ? (selected ? 'Выбрано ✓' : 'Куплено') : skin.price+' 💰'}</div>`;
-    item.onclick = () => {
-      if(owned) { selectedSkin = id; localStorage.setItem('vk_runner_selected_skin', id); openShop(); audio.playClick(); }
-      else if(totalCoins >= skin.price) { totalCoins -= skin.price; ownedSkins.push(id); selectedSkin = id; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', id); shopCoinsEl.textContent = totalCoins; openShop(); audio.playCoin(); }
-      else audio.playCrash();
+      magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable' },
+      shield: { name: 'Щит', icon: '🛡️', price: 50, type: 'consumable' }
     };
-    shopGridEl.appendChild(item);
-  });
-  
-  // БОНУСЫ (только магнит и щит) - можно купить только 1
-  const activeBonus = localStorage.getItem('vk_runner_active_bonus');
-  
-  Object.keys(shopItems).forEach(id => {
-    const item = shopItems[id];
-    const el = document.createElement('div'); 
-    el.className = 'shop-item';
-    
-    const isActive = activeBonus === id;
-    el.style.opacity = isActive ? '0.5' : '1';
-    el.style.cursor = isActive ? 'not-allowed' : 'pointer';
-    
-    el.innerHTML = `<div class="shop-item-icon">${item.icon}</div><div class="shop-item-name">${item.name}${isActive ? ' ✓' : ''}</div><div class="shop-item-price">${isActive ? 'Активен' : item.price+' 💰'}</div>`;
-    
-    if (!isActive) {
-      el.onclick = () => {
-        if (totalCoins >= item.price) {
-          totalCoins -= item.price;
-          localStorage.setItem('vk_runner_coins', totalCoins);
-          localStorage.setItem('vk_runner_active_bonus', id);
-          shopCoinsEl.textContent = totalCoins;
-          openShop();
-          audio.playCoin();
-          alert(`✅ ${item.name} активирован!`);
-        } else audio.playCrash();
-      };
-    }
-    shopGridEl.appendChild(el);
-  });
-  
-  // КНОПКА ПОКУПКИ МОНЕТ ЗА ГОЛОСА ВК
-  const vkBtn = document.createElement('div');
-  vkBtn.className = 'shop-item';
-  vkBtn.style.gridColumn = '1 / -1';
-  vkBtn.style.background = 'linear-gradient(135deg, #4a76a8, #6b9bd1)';
-  vkBtn.innerHTML = `<div class="shop-item-icon">💎</div><div class="shop-item-name">Купить монеты</div><div class="shop-item-price">За голоса ВК</div>`;
-  vkBtn.onclick = () => {
-    if (vkReady) {
-      bridge.send('VKWebAppShowOrderBox', {
-        type: 'item',
-        item: 'coins',
-        amount: 100
-      }).then(() => {
-        totalCoins += 100;
-        localStorage.setItem('vk_runner_coins', totalCoins);
-        shopCoinsEl.textContent = totalCoins;
-        audio.playCoin();
-        alert('✅ +100 монет!');
-      }).catch(() => alert('❌ Не удалось купить'));
-    } else {
-      totalCoins += 100;
-      localStorage.setItem('vk_runner_coins', totalCoins);
+
+    function openShop() {
+      const shopCoinsEl = document.getElementById('shopCoins');
+      const shopGridEl = document.getElementById('shopGrid');
+      if (!shopCoinsEl || !shopGridEl) return;
+      
       shopCoinsEl.textContent = totalCoins;
-      audio.playCoin();
-      alert('✅ +100 монет (тест)');
+      shopGridEl.innerHTML = '';
+      
+      Object.keys(skins).forEach(id => {
+        const skin = skins[id]; const owned = ownedSkins.includes(id); const selected = selectedSkin === id;
+        const item = document.createElement('div'); item.className = 'shop-item';
+        item.innerHTML = `<div class="shop-item-icon" style="background:${skin.color};border-radius:8px"></div><div class="shop-item-name">${skin.name}</div><div class="shop-item-price">${owned ? (selected ? 'Выбрано ✓' : 'Куплено') : skin.price+' 💰'}</div>`;
+        item.onclick = () => {
+          if(owned) { selectedSkin = id; localStorage.setItem('vk_runner_selected_skin', id); openShop(); audio.playClick(); }
+          else if(totalCoins >= skin.price) { totalCoins -= skin.price; ownedSkins.push(id); selectedSkin = id; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', id); shopCoinsEl.textContent = totalCoins; openShop(); audio.playCoin(); }
+          else audio.playCrash();
+        };
+        shopGridEl.appendChild(item);
+      });
+      
+      const activeBonus = localStorage.getItem('vk_runner_active_bonus');
+      Object.keys(shopItems).forEach(id => {
+        const item = shopItems[id];
+        const el = document.createElement('div'); el.className = 'shop-item';
+        const isActive = activeBonus === id;
+        el.style.opacity = isActive ? '0.5' : '1';
+        el.style.cursor = isActive ? 'not-allowed' : 'pointer';
+        el.innerHTML = `<div class="shop-item-icon">${item.icon}</div><div class="shop-item-name">${item.name}${isActive ? ' ✓' : ''}</div><div class="shop-item-price">${isActive ? 'Активен' : item.price+' 💰'}</div>`;
+        if (!isActive) {
+          el.onclick = () => {
+            if (totalCoins >= item.price) {
+              totalCoins -= item.price;
+              localStorage.setItem('vk_runner_coins', totalCoins);
+              localStorage.setItem('vk_runner_active_bonus', id);
+              shopCoinsEl.textContent = totalCoins;
+              openShop();
+              audio.playCoin();
+              alert(`✅ ${item.name} активирован!`);
+            } else audio.playCrash();
+          };
+        }
+        shopGridEl.appendChild(el);
+      });
+      
+      const vkBtn = document.createElement('div');
+      vkBtn.className = 'shop-item';
+      vkBtn.style.gridColumn = '1 / -1';
+      vkBtn.style.background = 'linear-gradient(135deg, #4a76a8, #6b9bd1)';
+      vkBtn.innerHTML = `<div class="shop-item-icon">💎</div><div class="shop-item-name">Купить монеты</div><div class="shop-item-price">За голоса ВК</div>`;
+      vkBtn.onclick = () => {
+        if (vkReady) {
+          bridge.send('VKWebAppShowOrderBox', { type: 'item', item: 'coins', amount: 100 })
+            .then(() => { totalCoins += 100; localStorage.setItem('vk_runner_coins', totalCoins); shopCoinsEl.textContent = totalCoins; audio.playCoin(); alert('✅ +100 монет!'); })
+            .catch(() => alert('❌ Не удалось купить'));
+        } else { totalCoins += 100; localStorage.setItem('vk_runner_coins', totalCoins); shopCoinsEl.textContent = totalCoins; audio.playCoin(); alert('✅ +100 монет (тест)'); }
+      };
+      shopGridEl.appendChild(vkBtn);
+      
+      const shopScreen = document.getElementById('shopScreen');
+      if (shopScreen) shopScreen.classList.add('active');
     }
-  };
-  shopGridEl.appendChild(vkBtn);
-  
-  const shopScreen = document.getElementById('shopScreen');
-  if (shopScreen) shopScreen.classList.add('active');
-}
 
     // ============================================
     // === MISSIONS SYSTEM
@@ -439,16 +456,16 @@
     // ============================================
     // === GAME STATE
     // ============================================
-    let score = 0, runCoins = 0;
+    let score = 0, runCoins = 0, combo = 1, comboTimer = 0;
     let isPlaying = false, isPaused = false, isGameOver = false;
     let gameSpeed = 5; let lastTime = 0; let animFrame = 0; let screenShake = 0;
-    let moonMood = 0;
+    let moonMood = 0, timeScale = 1;
     
-    let player = { x: 0, y: 0, w: 40, h: 60, vy: 0, grounded: true, shield: false, magnet: false, doubleScore: false, doubleJump: false, jumps: 0 };
+    let player = { x: 0, y: 0, w: 35, h: 55, vy: 0, grounded: true, shield: false, magnet: false, doubleScore: false, doubleJump: false, jumps: 0, blink: 0 };
     let obstacles = [], coins = [], particles = [], powerups = [];
     let lastObstacleTime = 0, lastCoinTime = 0, lastPowerupTime = 0;
     let animId; let canRevive = false; let reviveTimer = null;
-    let shootingStars = [];
+    let shootingStars = [], bgOffset1 = 0, bgOffset2 = 0, bgOffset3 = 0;
 
     // ============================================
     // === DRAWING FUNCTIONS
@@ -457,14 +474,21 @@
       const time = Date.now() * 0.01;
       const skinColor = skins[selectedSkin]?.color || '#ff8c00';
       
+      // Blink animation
+      player.blink += 0.02;
+      const isBlinking = Math.sin(player.blink) > 0.98;
+      
       // Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath(); ctx.ellipse(x + w/2, y + h, w * 0.5, h * 0.08, 0, 0, Math.PI*2); ctx.fill();
       
       // Shield effect
       if (player.shield) {
-        ctx.fillStyle = `rgba(52,152,219, ${0.3 + Math.sin(time*5)*0.1})`;
-        ctx.beginPath(); ctx.arc(x + w/2, y + h/2, w * 0.9, 0, Math.PI*2); ctx.fill();
+        const gradient = ctx.createRadialGradient(x + w/2, y + h/2, 0, x + w/2, y + h/2, w * 1.2);
+        gradient.addColorStop(0, 'rgba(52,152,219,0.4)');
+        gradient.addColorStop(1, 'rgba(52,152,219,0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath(); ctx.arc(x + w/2, y + h/2, w * 1.2, 0, Math.PI*2); ctx.fill();
       }
       
       // Legs (animated)
@@ -481,9 +505,9 @@
       ctx.fillStyle = skinColor;
       ctx.fillRect(x + w*0.3, y + h*0.25, w*0.4, h*0.35);
       
-      // Arms (animated)
+      // Arms (animated with wave when jumping)
       ctx.strokeStyle = '#fdbcb4'; ctx.lineWidth = w * 0.2;
-      const armSwing = isJumping ? -0.5 : Math.sin(time * 1.5) * 0.8;
+      const armSwing = isJumping ? -0.8 : Math.sin(time * 1.5) * 0.8;
       ctx.beginPath(); ctx.moveTo(x + w*0.35, y + h*0.3); ctx.lineTo(x + w*(0.2 - armSwing), y + h*0.5); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x + w*0.65, y + h*0.3); ctx.lineTo(x + w*(0.8 + armSwing), y + h*0.5); ctx.stroke();
       
@@ -500,11 +524,23 @@
       ctx.fillStyle = skinColor;
       ctx.fillRect(x + w*0.15, y + h*0.12, w*0.7, w*0.08);
       
-      // Face
-      ctx.fillStyle = 'white';
-      ctx.fillRect(x + w*0.55, y + h*0.12, w*0.15, w*0.12);
-      ctx.fillStyle = '#1a1a2e';
-      ctx.fillRect(x + w*0.65, y + h*0.15, w*0.08, w*0.08);
+      // Face with expression
+      if (!isBlinking) {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(x + w*0.55, y + h*0.12, w*0.15, w*0.12);
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(x + w*0.65, y + h*0.15, w*0.08, w*0.08);
+      } else {
+        // Blinking eyes
+        ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x + w*0.6, y + h*0.18); ctx.lineTo(x + w*0.7, y + h*0.18); ctx.stroke();
+      }
+      
+      // Smile when happy
+      if (moonMood === 1) {
+        ctx.strokeStyle = '#1a1a2e'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(x + w*0.6, y + h*0.22, w*0.1, 0.2*Math.PI, 0.8*Math.PI); ctx.stroke();
+      }
     }
 
     function drawBat(ctx, x, y, w, h) {
@@ -512,23 +548,18 @@
       const wingFlap = Math.sin(time * 4) * 0.5;
       
       ctx.fillStyle = '#2c3e50';
-      // Body
       ctx.beginPath(); ctx.ellipse(x + w/2, y + h/2, w*0.3, h*0.4, 0, 0, Math.PI*2); ctx.fill();
-      // Wings
       ctx.fillStyle = '#1a252f';
       ctx.beginPath();
       ctx.moveTo(x + w*0.3, y + h*0.4);
       ctx.quadraticCurveTo(x + w*0.1, y + h*(0.2 + wingFlap), x, y + h*0.5);
       ctx.quadraticCurveTo(x + w*0.1, y + h*(0.6 + wingFlap), x + w*0.3, y + h*0.6);
       ctx.fill();
-      
       ctx.beginPath();
       ctx.moveTo(x + w*0.7, y + h*0.4);
       ctx.quadraticCurveTo(x + w*0.9, y + h*(0.2 + wingFlap), x + w, y + h*0.5);
       ctx.quadraticCurveTo(x + w*0.9, y + h*(0.6 + wingFlap), x + w*0.7, y + h*0.6);
       ctx.fill();
-      
-      // Eyes
       ctx.fillStyle = '#e74c3c';
       ctx.beginPath(); ctx.arc(x + w*0.4, y + h*0.35, 3, 0, Math.PI*2); ctx.fill();
       ctx.beginPath(); ctx.arc(x + w*0.6, y + h*0.35, 3, 0, Math.PI*2); ctx.fill();
@@ -538,7 +569,6 @@
       const mx = W * 0.8; const my = floorY * 0.25; const radius = 50;
       const time = Date.now() * 0.001;
       
-      // Glow
       const gradient = ctx.createRadialGradient(mx, my, radius * 0.5, mx, my, radius * 1.8);
       gradient.addColorStop(0, 'rgba(240, 230, 140, 0.8)');
       gradient.addColorStop(0.4, 'rgba(240, 230, 140, 0.3)');
@@ -546,13 +576,10 @@
       ctx.fillStyle = gradient;
       ctx.beginPath(); ctx.arc(mx, my, radius * 1.8, 0, Math.PI*2); ctx.fill();
       
-      // Moon body
       ctx.fillStyle = '#f0e68c'; ctx.globalAlpha = 0.95;
       ctx.beginPath(); ctx.arc(mx, my, radius, 0, Math.PI*2); ctx.fill();
       
-      // Face
       ctx.fillStyle = '#2c3e50';
-      // Blinking eyes
       const blink = Math.sin(time * 2) > 0.95;
       if (blink) {
         ctx.beginPath(); ctx.moveTo(mx-18, my-10); ctx.lineTo(mx-10, my-10); ctx.stroke();
@@ -561,7 +588,6 @@
         ctx.beginPath(); ctx.arc(mx-14, my-10, 5, 0, Math.PI*2); ctx.arc(mx+14, my-10, 5, 0, Math.PI*2); ctx.fill();
       }
       
-      // Mouth
       ctx.beginPath();
       if (moonMood === 1) ctx.arc(mx, my+5, 20, 0.1*Math.PI, 0.9*Math.PI);
       else if (moonMood === -1) ctx.arc(mx, my+30, 15, 1.2*Math.PI, 1.8*Math.PI);
@@ -571,13 +597,14 @@
     }
 
     function drawBackground() {
-      ctx.clearRect(0, 0, W, H);
+      // Sky gradient
       const skyGrad = ctx.createLinearGradient(0, 0, 0, floorY);
       skyGrad.addColorStop(0, '#0f0c29'); skyGrad.addColorStop(0.5, '#302b63'); skyGrad.addColorStop(1, '#24243e');
       ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, W, floorY);
       
       drawMoon(ctx);
       
+      // Stars
       ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
       for (let i = 0; i < 50; i++) {
         const x = ((i * 137.5 + 12345) % W); const y = ((i * 89.3 + 12345) % (floorY * 0.7));
@@ -586,136 +613,134 @@
       }
       ctx.globalAlpha = 1;
       
+      // Shooting stars
       shootingStars.forEach(s => {
         ctx.strokeStyle = 'white'; ctx.lineWidth = 2; ctx.globalAlpha = s.alpha;
         ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + 40, s.y - 20); ctx.stroke();
         ctx.globalAlpha = 1;
       });
 
-      let bg1 = 0; bg1 -= gameSpeed * 0.15; if (bg1 <= -W) bg1 = 0;
+      // Parallax mountains (far)
+      bgOffset1 -= gameSpeed * 0.15; if (bgOffset1 <= -W) bgOffset1 = 0;
       ctx.fillStyle = '#1a1a2e'; ctx.beginPath(); ctx.moveTo(0, floorY);
-      for (let x = 0; x <= W; x += 0.5) { ctx.lineTo(x, floorY - 50 - Math.abs(Math.sin((x + bg1) * 0.008)) * 100); }
+      for (let x = 0; x <= W; x += 0.5) { ctx.lineTo(x, floorY - 50 - Math.abs(Math.sin((x + bgOffset1) * 0.008)) * 100); }
       ctx.lineTo(W, floorY); ctx.fill();
       
-      let bg2 = 0; bg2 -= gameSpeed * 0.4; if (bg2 <= -W) bg2 = 0;
+      // Parallax hills (middle)
+      bgOffset2 -= gameSpeed * 0.4; if (bgOffset2 <= -W) bgOffset2 = 0;
       ctx.fillStyle = '#2d5a3d'; ctx.beginPath(); ctx.moveTo(0, floorY);
-      for (let x = 0; x <= W; x += 0.5) { ctx.lineTo(x, floorY - 25 - Math.abs(Math.sin((x + bg2) * 0.012)) * 50); }
+      for (let x = 0; x <= W; x += 0.5) { ctx.lineTo(x, floorY - 25 - Math.abs(Math.sin((x + bgOffset2) * 0.012)) * 50); }
       ctx.lineTo(W, floorY); ctx.fill();
       
+      // Parallax trees/bushes (near)
+      bgOffset3 -= gameSpeed * 0.8; if (bgOffset3 <= -W) bgOffset3 = 0;
+      ctx.fillStyle = '#3d7a3d';
+      for (let x = bgOffset3; x < W + bgOffset3 + 100; x += 40) {
+        const treeX = x % (W + 200);
+        ctx.beginPath();
+        ctx.moveTo(treeX, floorY);
+        ctx.lineTo(treeX + 15, floorY - 30);
+        ctx.lineTo(treeX + 30, floorY);
+        ctx.closePath(); ctx.fill();
+      }
+      
+      // Ground
       ctx.fillStyle = '#1a4a1a'; ctx.fillRect(0, floorY, W, H - floorY);
       ctx.fillStyle = '#4a9a4a'; ctx.fillRect(0, floorY, W, 8);
       const time = Date.now() * 0.001; ctx.fillStyle = '#3d8a3d';
       for (let x = 0; x < W; x += 15) { const h = 5 + Math.sin(x * 0.1 + time) * 3; ctx.fillRect(x, floorY - h, 2, h); }
     }
 
+    function createParticles(x, y, count, color, size = 5) {
+      for(let i=0; i<count; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8,
+          life: 1,
+          color,
+          size: Math.random() * size + 3,
+          gravity: 0.2
+        });
+      }
+    }
+
     // ============================================
     // === GAME LOGIC
     // ============================================
     function resetGame() {
-  cancelAnimationFrame(animId);
-  score = 0;
-  runCoins = 0;
-  gameSpeed = 5;
-  player.x = W * 0.15;
-  player.y = floorY - 60;
-  player.vy = 0;
-  player.grounded = true;
-  player.shield = false;
-  player.magnet = false;
-  player.doubleScore = false;
-  player.doubleJump = false;
-  player.jumps = 0;
-  
-  // 🔑 Применяем активный бонус из магазина
-  const activeBonus = localStorage.getItem('vk_runner_active_bonus');
-  if (activeBonus === 'magnet') {
-    player.magnet = true;
-    activatePowerup('magnet');
-  } else if (activeBonus === 'shield') {
-    player.shield = true;
-    activatePowerup('shield');
-  }
-  // Сбрасываем бонус после применения
-  localStorage.removeItem('vk_runner_active_bonus');
-  
-  obstacles = [];
-  coins = [];
-  particles = [];
-  powerups = [];
-  lastObstacleTime = 0;
-  lastCoinTime = 0;
-  lastPowerupTime = 0;
-  animFrame = 0;
-  screenShake = 0;
-  canRevive = true;
-  moonMood = 0;
-}
+      cancelAnimationFrame(animId);
+      score = 0; runCoins = 0; combo = 1; comboTimer = 0;
+      gameSpeed = 5;
+      player.x = W * 0.15; player.y = floorY - 60; player.vy = 0; player.grounded = true;
+      player.shield = false; player.magnet = false; player.doubleScore = false; player.doubleJump = false; player.jumps = 0; player.blink = 0;
+      
+      const activeBonus = localStorage.getItem('vk_runner_active_bonus');
+      if (activeBonus === 'magnet') { player.magnet = true; activatePowerup('magnet'); }
+      else if (activeBonus === 'shield') { player.shield = true; activatePowerup('shield'); }
+      localStorage.removeItem('vk_runner_active_bonus');
+      
+      obstacles = []; coins = []; particles = []; powerups = [];
+      lastObstacleTime = 0; lastCoinTime = 0; lastPowerupTime = 0;
+      animFrame = 0; screenShake = 0; canRevive = true; moonMood = 0; timeScale = 1;
+      shootingStars = []; bgOffset1 = 0; bgOffset2 = 0; bgOffset3 = 0;
+    }
 
     function jump() {
       if (!isPlaying || isPaused || isGameOver) return;
       if (player.grounded) { 
         player.vy = -13; player.grounded = false; player.jumps = 1; 
-        audio.playJump(); createParticles(player.x+player.w/2, player.y+player.h, 6, '#8b7355'); 
+        audio.playJump(); createParticles(player.x+player.w/2, player.y+player.h, 8, '#8b7355', 4); 
         updateMission('jump_count', 1);
         moonMood = 1; setTimeout(() => { if(moonMood === 1) moonMood = 0; }, 600);
       }
       else if (player.doubleJump && player.jumps < 2) { 
         player.vy = -13; player.jumps = 2; 
-        audio.playJump(); createParticles(player.x+player.w/2, player.y+player.h, 6, '#3498db'); 
+        audio.playJump(); createParticles(player.x+player.w/2, player.y+player.h, 8, '#3498db', 4); 
         updateMission('jump_count', 1);
         moonMood = 1; setTimeout(() => { if(moonMood === 1) moonMood = 0; }, 600);
       }
     }
 
-    function createParticles(x, y, count, color) { for(let i=0;i<count;i++) particles.push({x, y, vx:(Math.random()-0.5)*5, vy:(Math.random()-0.5)*5, life:1, color, size:Math.random()*5+3}); }
-
-   function spawnObjects() {
-  const now = performance.now();
-  
-  // 🔑 РАЗНЫЕ ПРЕПЯТСТВИЯ
-  if (now - lastObstacleTime > 1200 + Math.random() * 500) {
-    const r = Math.random();
-    
-    if (r < 0.25) {
-      // 🔻 ЯМА (просто пропускаем отрисовку земли в этом месте)
-      obstacles.push({ x: W, y: floorY, w: 80, h: 20, type: 'pit' });
-    } else if (r < 0.45) {
-      // 🟫 Маленький блок
-      obstacles.push({ x: W, y: floorY - 30, w: 30, h: 30, type: 'block' });
-    } else if (r < 0.60) {
-      // 🟫 Средний блок
-      obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'block' });
-    } else if (r < 0.75) {
-      // 🟫 Большой блок
-      obstacles.push({ x: W, y: floorY - 50, w: 50, h: 50, type: 'block' });
-    } else if (r < 0.85) {
-      // 🔺 Шипы
-      obstacles.push({ x: W, y: floorY - 35, w: 40, h: 35, type: 'spike' });
-    } else if (r < 0.93) {
-      // 🦇 Летучая мышь
-      obstacles.push({ x: W, y: floorY - 100 - Math.random()*40, w: 40, h: 30, type: 'bat' });
-    } else {
-      // 🪨 Камень
-      obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
+    function spawnObjects() {
+      const now = performance.now();
+      
+      if (now - lastObstacleTime > 1200 + Math.random() * 500) {
+        const r = Math.random();
+        
+        if (r < 0.25) {
+          obstacles.push({ x: W, y: floorY, w: 80, h: 20, type: 'pit' });
+        } else if (r < 0.45) {
+          obstacles.push({ x: W, y: floorY - 30, w: 30, h: 30, type: 'block' });
+        } else if (r < 0.60) {
+          obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'block' });
+        } else if (r < 0.75) {
+          obstacles.push({ x: W, y: floorY - 50, w: 50, h: 50, type: 'block' });
+        } else if (r < 0.85) {
+          obstacles.push({ x: W, y: floorY - 35, w: 40, h: 35, type: 'spike' });
+        } else if (r < 0.93) {
+          obstacles.push({ x: W, y: floorY - 100 - Math.random()*40, w: 40, h: 30, type: 'bat' });
+        } else {
+          obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
+        }
+        
+        lastObstacleTime = now;
+      }
+      
+      if (now - lastCoinTime > 800 + Math.random() * 400) {
+        const count = Math.floor(Math.random() * 3) + 1;
+        for (let i = 0; i < count; i++) coins.push({ x: W + i * 45, y: floorY - 90 - Math.random() * 60, w: 30, h: 30, bob: Math.random() * Math.PI * 2 });
+        lastCoinTime = now;
+      }
+      
+      if (now - lastPowerupTime > 15000 + Math.random() * 10000) {
+        const types = ['magnet', 'shield', 'double', 'doublejump'];
+        powerups.push({ x: W, y: floorY - 100 - Math.random() * 100, w: 40, h: 40, type: types[Math.floor(Math.random()*types.length)] });
+        lastPowerupTime = now;
+      }
+      
+      if (Math.random() < 0.005) shootingStars.push({ x: Math.random() * W, y: Math.random() * floorY * 0.5, alpha: 1 });
     }
-    
-    lastObstacleTime = now;
-  }
-  
-  if (now - lastCoinTime > 800 + Math.random() * 400) {
-    const count = Math.floor(Math.random() * 3) + 1;
-    for (let i = 0; i < count; i++) coins.push({ x: W + i * 45, y: floorY - 90 - Math.random() * 60, w: 30, h: 30, bob: Math.random() * Math.PI * 2 });
-    lastCoinTime = now;
-  }
-  
-  if (now - lastPowerupTime > 15000 + Math.random() * 10000) {
-    const types = ['magnet', 'shield', 'double', 'doublejump'];
-    powerups.push({ x: W, y: floorY - 100 - Math.random() * 100, w: 40, h: 40, type: types[Math.floor(Math.random()*types.length)] });
-    lastPowerupTime = now;
-  }
-  
-  if (Math.random() < 0.005) shootingStars.push({ x: Math.random() * W, y: Math.random() * floorY * 0.5, alpha: 1 });
-}
 
     function checkCollision(a, b) { return a.x + 10 < b.x + b.w - 10 && a.x + a.w - 10 > b.x + 10 && a.y + 10 < b.y + b.h - 10 && a.y + a.h - 10 > b.y + 10; }
 
@@ -740,51 +765,70 @@
     function update(dt) {
       if (!isPlaying || isPaused || isGameOver) return;
 
-      player.vy += 0.65; player.y += player.vy;
+      player.vy += 0.65 * timeScale; player.y += player.vy * timeScale;
       if (player.y + player.h >= floorY) { player.y = floorY - player.h; player.vy = 0; player.grounded = true; }
-      if (player.grounded) animFrame += 0.15;
+      if (player.grounded) animFrame += 0.15 * timeScale;
+
+      // Combo system
+      if (player.grounded) {
+        comboTimer += dt * timeScale;
+        if (comboTimer > 3000 && combo < 5) {
+          combo++;
+          comboTimer = 0;
+          const comboEl = document.getElementById('combo');
+          const comboValueEl = document.getElementById('comboValue');
+          if (comboEl && comboValueEl) {
+            comboValueEl.textContent = combo;
+            comboEl.classList.add('show');
+            setTimeout(() => comboEl.classList.remove('show'), 2000);
+          }
+        }
+      } else {
+        comboTimer = 0;
+      }
 
       spawnObjects();
 
       if (player.magnet) coins.forEach(c => { const dx=(player.x+player.w/2)-(c.x+c.w/2); const dy=(player.y+player.h/2)-(c.y+c.h/2); const d=Math.sqrt(dx*dx+dy*dy); if(d<200) { c.x+=dx*0.1; c.y+=dy*0.1; } });
 
-      shootingStars.forEach((s, i) => { s.x -= 10; s.y += 5; s.alpha -= 0.02; if(s.alpha <= 0) shootingStars.splice(i, 1); });
+      shootingStars.forEach((s, i) => { s.x -= 10 * timeScale; s.y += 5 * timeScale; s.alpha -= 0.02; if(s.alpha <= 0) shootingStars.splice(i, 1); });
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
-        let o = obstacles[i]; o.x -= gameSpeed; if (o.x + o.w < 0) obstacles.splice(i, 1);
+        let o = obstacles[i]; o.x -= gameSpeed * timeScale; if (o.x + o.w < 0) obstacles.splice(i, 1);
         if (checkCollision(player, o)) {
           if (player.shield) { player.shield = false; audio.playCrash(); screenShake = 10; obstacles.splice(i, 1); document.querySelector('.powerup-shield')?.remove(); }
-          else { audio.playCrash(); screenShake = 20; moonMood = -1; createParticles(player.x+player.w/2, player.y+player.h/2, 25, '#e74c3c'); gameOver(); }
+          else { audio.playCrash(); screenShake = 20; moonMood = -1; createParticles(player.x+player.w/2, player.y+player.h/2, 30, '#e74c3c', 8); gameOver(); }
         }
       }
 
       const time = Date.now() / 200;
       for (let i = coins.length - 1; i >= 0; i--) {
-        let c = coins[i]; c.x -= gameSpeed; c.y += Math.sin(time + c.bob) * 0.4; if (c.x + c.w < 0) coins.splice(i, 1);
+        let c = coins[i]; c.x -= gameSpeed * timeScale; c.y += Math.sin(time + c.bob) * 0.4; if (c.x + c.w < 0) coins.splice(i, 1);
         if (checkCollision(player, c)) {
-          const val = player.doubleScore ? 2 : 1; runCoins += val; totalCoins += val;
+          const val = player.doubleScore ? 2 * combo : 1 * combo; runCoins += val; totalCoins += val;
           localStorage.setItem('vk_runner_coins', totalCoins);
           const coinsEl = document.getElementById('coins');
           const totalCoinsEl = document.getElementById('totalCoins');
           if (coinsEl) coinsEl.textContent = runCoins;
           if (totalCoinsEl) totalCoinsEl.textContent = totalCoins;
-          audio.playCoin(); createParticles(c.x+c.w/2, c.y+c.h/2, 10, '#f1c40f'); coins.splice(i, 1); updateMission('collect_coins', 1);
+          audio.playCoin(); createParticles(c.x+c.w/2, c.y+c.h/2, 15, '#f1c40f', 6); coins.splice(i, 1); updateMission('collect_coins', 1);
+          comboTimer = 0;
         }
       }
 
       for (let i = powerups.length - 1; i >= 0; i--) {
-        let p = powerups[i]; p.x -= gameSpeed; if (p.x + p.w < 0) powerups.splice(i, 1);
+        let p = powerups[i]; p.x -= gameSpeed * timeScale; if (p.x + p.w < 0) powerups.splice(i, 1);
         if (checkCollision(player, p)) { activatePowerup(p.type); powerups.splice(i, 1); }
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life -= dt * 0.002; p.size *= 0.97; if (p.life <= 0) particles.splice(i, 1);
+        let p = particles[i]; p.x += p.vx * timeScale; p.y += p.vy * timeScale; p.vy += p.gravity * timeScale; p.life -= dt * 0.002 * timeScale; p.size *= 0.97; if (p.life <= 0) particles.splice(i, 1);
       }
 
-      score += player.doubleScore ? 0.2 : 0.1;
-      // 🔑 FIX: Убрал динамическое увеличение скорости
-      document.getElementById('score').textContent = Math.floor(score);
-      updateMission('run_distance', 0.1);
+      score += (player.doubleScore ? 0.2 : 0.1) * combo * timeScale;
+      const scoreEl = document.getElementById('score');
+      if (scoreEl) scoreEl.textContent = Math.floor(score);
+      updateMission('run_distance', 0.1 * timeScale);
       
       if (screenShake > 0) { screenShake *= 0.9; if (screenShake < 0.5) screenShake = 0; }
     }
@@ -792,6 +836,8 @@
     function draw() {
       ctx.save();
       if (screenShake > 0) ctx.translate((Math.random()-0.5)*screenShake, (Math.random()-0.5)*screenShake);
+      ctx.scale(timeScale, timeScale);
+      
       drawBackground();
       const time = Date.now() / 200;
       
@@ -816,52 +862,45 @@
         }
       });
 
-     obstacles.forEach(o => {
-  if (o.type === 'pit') {
-    // 🔻 ЯМА - просто темный прямоугольник
-    ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(o.x, o.y, o.w, o.h);
-    ctx.fillStyle = '#1a1a1a';
-    ctx.fillRect(o.x + 5, o.y, o.w - 10, o.h);
-  } else if (o.type === 'block') {
-    // 🟫 Блок
-    ctx.fillStyle = '#8b4513';
-    ctx.fillRect(o.x, o.y, o.w, o.h);
-    ctx.fillStyle = '#a0522d';
-    ctx.fillRect(o.x + 5, o.y + 5, o.w - 10, o.h - 10);
-  } else if (o.type === 'spike') {
-    // 🔺 Шипы
-    ctx.fillStyle = '#7f8c8d';
-    ctx.beginPath();
-    ctx.moveTo(o.x, o.y + o.h);
-    ctx.lineTo(o.x + o.w/2, o.y);
-    ctx.lineTo(o.x + o.w, o.y + o.h);
-    ctx.closePath();
-    ctx.fill();
-  } else if (o.type === 'rock') {
-    // 🪨 Камень
-    ctx.fillStyle = '#7f8c8d';
-    ctx.beginPath();
-    ctx.moveTo(o.x, o.y+o.h); ctx.lineTo(o.x+o.w/2, o.y); ctx.lineTo(o.x+o.w, o.y+o.h);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#95a5a6';
-    ctx.beginPath();
-    ctx.moveTo(o.x+10, o.y+o.h-10); ctx.lineTo(o.x+o.w/2, o.y+20); ctx.lineTo(o.x+o.w-10, o.y+o.h-10);
-    ctx.closePath(); ctx.fill();
-  } else if (o.type === 'bat') {
-    // 🦇 Летучая мышь
-    drawBat(ctx, o.x, o.y, o.w, o.h);
-  }
-});
+      obstacles.forEach(o => {
+        if (o.type === 'pit') {
+          ctx.fillStyle = '#0a0a0a';
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillRect(o.x + 5, o.y, o.w - 10, o.h);
+        } else if (o.type === 'block') {
+          ctx.fillStyle = '#8b4513';
+          ctx.fillRect(o.x, o.y, o.w, o.h);
+          ctx.fillStyle = '#a0522d';
+          ctx.fillRect(o.x + 5, o.y + 5, o.w - 10, o.h - 10);
+        } else if (o.type === 'spike') {
+          ctx.fillStyle = '#7f8c8d';
+          ctx.beginPath();
+          ctx.moveTo(o.x, o.y + o.h); ctx.lineTo(o.x + o.w/2, o.y); ctx.lineTo(o.x + o.w, o.y + o.h);
+          ctx.closePath(); ctx.fill();
+        } else if (o.type === 'rock') {
+          ctx.fillStyle = '#7f8c8d';
+          ctx.beginPath();
+          ctx.moveTo(o.x, o.y+o.h); ctx.lineTo(o.x+o.w/2, o.y); ctx.lineTo(o.x+o.w, o.y+o.h);
+          ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#95a5a6';
+          ctx.beginPath();
+          ctx.moveTo(o.x+10, o.y+o.h-10); ctx.lineTo(o.x+o.w/2, o.y+20); ctx.lineTo(o.x+o.w-10, o.y+o.h-10);
+          ctx.closePath(); ctx.fill();
+        } else if (o.type === 'bat') {
+          drawBat(ctx, o.x, o.y, o.w, o.h);
+        }
+      });
 
       drawPlayer(ctx, player.x, player.y, player.w, player.h, animFrame, !player.grounded);
+      
       particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); });
       ctx.globalAlpha = 1; ctx.restore();
     }
 
     function loop(timestamp) {
       const dt = timestamp - lastTime; lastTime = timestamp;
-      update(dt); draw(); animId = requestAnimationFrame(loop);
+      update(dt * timeScale); draw(); animId = requestAnimationFrame(loop);
     }
 
     // ============================================
@@ -870,7 +909,7 @@
     function startGame() {
       if (!audio.ctx) audio.init();
       audio.stopMusic(); audio.playGameMusic();
-      resetGame(); // 🔑 FIX: Здесь уже есть cancelAnimationFrame
+      resetGame();
       isPlaying = true; isPaused = false; isGameOver = false;
       
       const mainMenu = document.getElementById('mainMenu');
@@ -894,20 +933,8 @@
       loop(lastTime);
     }
 
-    function pauseGame() { 
-      isPaused = true; 
-      audio.stopMusic(); 
-      const pm = document.getElementById('pauseMenu'); 
-      if(pm) pm.classList.add('active'); 
-    }
-    
-    function resumeGame() { 
-      isPaused = false; 
-      if (audio.musicEnabled && audio.enabled) audio.playGameMusic(); 
-      const pm = document.getElementById('pauseMenu'); 
-      if(pm) pm.classList.remove('active'); 
-      lastTime = performance.now(); 
-    }
+    function pauseGame() { isPaused = true; audio.stopMusic(); const pm = document.getElementById('pauseMenu'); if(pm) pm.classList.add('active'); }
+    function resumeGame() { isPaused = false; if (audio.musicEnabled && audio.enabled) audio.playGameMusic(); const pm = document.getElementById('pauseMenu'); if(pm) pm.classList.remove('active'); lastTime = performance.now(); }
     
     function showRevive() {
       const rc = document.getElementById('reviveContainer');
@@ -919,58 +946,47 @@
     }
 
     function revive() {
-      if (!canRevive) return; 
-      clearInterval(reviveTimer); 
+      if (!canRevive) return; clearInterval(reviveTimer); 
       const rc = document.getElementById('reviveContainer');
       if(rc) rc.style.display = 'none';
       player.vy = 0; player.grounded = true; player.shield = true; player.x = W * 0.15;
       obstacles = obstacles.filter(o => o.x > W/2);
       isGameOver = false; canRevive = false; moonMood = 0; 
-      audio.playPowerup(); 
-      activatePowerup('shield');
-      lastTime = performance.now(); 
-      loop(lastTime);
+      audio.playPowerup(); activatePowerup('shield');
+      lastTime = performance.now(); loop(lastTime);
     }
 
     async function exitAndSave() {
-      isPlaying = false; isPaused = false; isGameOver = false; 
-      cancelAnimationFrame(animId); 
-      audio.stopMusic();
+      isPlaying = false; isPaused = false; isGameOver = false; cancelAnimationFrame(animId); audio.stopMusic();
       await saveToCloud(true);
-      
       const pauseMenu = document.getElementById('pauseMenu');
       const gameOverScreen = document.getElementById('gameOverScreen');
       const gameUI = document.getElementById('gameUI');
       const mainMenu = document.getElementById('mainMenu');
-      
       if (pauseMenu) pauseMenu.classList.remove('active');
       if (gameOverScreen) gameOverScreen.classList.remove('active');
       if (gameUI) gameUI.style.display = 'none';
       if (mainMenu) mainMenu.classList.add('active');
-      
       setTimeout(() => { if (!audio.ctx) audio.init(); audio.playMenuMusic(); }, 100);
     }
 
     function gameOver() {
-      isPlaying = false; isGameOver = true; 
-      cancelAnimationFrame(animId); 
-      audio.stopMusic();
-      
+      isPlaying = false; isGameOver = true; cancelAnimationFrame(animId); audio.stopMusic();
       if (Math.floor(score) > highScore) {
-        highScore = Math.floor(score); 
-        localStorage.setItem('vk_runner_hs', highScore);
+        highScore = Math.floor(score); localStorage.setItem('vk_runner_hs', highScore);
         const rf = document.getElementById('recordFlash');
-        if(rf) { rf.style.display = 'block'; setTimeout(() => rf.style.display = 'none', 500); }
+        if(rf) { rf.style.display = 'block'; setTimeout(() => rf.style.display = 'none', 1000); }
+        // Celebration particles
+        for(let i=0; i<5; i++) {
+          setTimeout(() => createParticles(W/2, H/2, 20, '#ffd700', 10), i*200);
+        }
       }
-      
       saveToCloud(false);
-      
       const finalScoreEl = document.getElementById('finalScore');
       const highScoreEl = document.getElementById('highScore');
       const runCoinsEl = document.getElementById('runCoins');
       const gameOverScreen = document.getElementById('gameOverScreen');
       const gameUI = document.getElementById('gameUI');
-      
       if (finalScoreEl) finalScoreEl.textContent = Math.floor(score);
       if (highScoreEl) highScoreEl.textContent = highScore;
       if (runCoinsEl) runCoinsEl.textContent = runCoins;
