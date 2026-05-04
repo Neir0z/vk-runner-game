@@ -278,7 +278,12 @@
       playCrash() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playNoise(0.3); }
       playClick() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playTone(800, 600, 0.05, 'sine'); }
       playPowerup() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playTone(400, 800, 0.2, 'sine'); setTimeout(() => this.playTone(600, 1200, 0.2, 'sine'), 100); }
-      playJetpack() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playTone(100, 300, 0.5, 'sawtooth'); }
+      playJetpack() { 
+        if (!this.sfxEnabled || !this.ctx || !this.enabled) return; 
+        // ✅ FIX: Stronger activation sound
+        this.playTone(200, 600, 0.4, 'sawtooth'); 
+        setTimeout(() => this.playTone(150, 400, 0.3, 'square'), 100);
+      }
       playTone(f1, f2, d, t) { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.connect(g); g.connect(this.ctx.destination); o.frequency.setValueAtTime(f1, this.ctx.currentTime); o.frequency.exponentialRampToValueAtTime(f2, this.ctx.currentTime + d); o.type = t; g.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); o.start(); o.stop(this.ctx.currentTime + d); }
       playNoise(d) { const bs = this.ctx.sampleRate * d; const b = this.ctx.createBuffer(1, bs, this.ctx.sampleRate); const d2 = b.getChannelData(0); for(let i=0;i<bs;i++) d2[i] = Math.random() * 2 - 1; const n = this.ctx.createBufferSource(); n.buffer = b; const g = this.ctx.createGain(); g.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); n.connect(g); g.connect(this.ctx.destination); n.start(); }
       setVolume(v) { this.volume = v; }
@@ -451,7 +456,7 @@
     let isPlaying = false, isPaused = false, isGameOver = false;
     let gameSpeed = 5; let lastTime = 0; let animFrame = 0; let screenShake = 0;
     let moonMood = 0, timeScale = 1;
-    let spaceHeld = false; // ✅ NEW: Track space hold for jetpack
+    let spaceHeld = false;
     
     let player = { x: 0, y: 0, w: 35, h: 55, vy: 0, grounded: true, shield: false, magnet: false, doubleScore: false, doubleJump: false, jumps: 0, blink: 0, jetpack: false };
     let obstacles = [], coins = [], particles = [], powerups = [];
@@ -480,19 +485,20 @@
         ctx.beginPath(); ctx.arc(x + w/2, y + h/2, w * 1.2, 0, Math.PI*2); ctx.fill();
       }
       
-      // Jetpack flames
+      // ✅ FIX: Jetpack fire from feet
       if (player.jetpack && spaceHeld) {
+        const flameLen = 20 + Math.random() * 15;
         ctx.fillStyle = '#ff4500';
         ctx.beginPath();
-        ctx.moveTo(x + w*0.3, y + h*0.6);
-        ctx.lineTo(x + w*0.5, y + h + 15 + Math.random()*10);
-        ctx.lineTo(x + w*0.7, y + h*0.6);
+        ctx.moveTo(x + w*0.3, y + h);
+        ctx.lineTo(x + w*0.5, y + h + flameLen);
+        ctx.lineTo(x + w*0.7, y + h);
         ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#ffff00';
         ctx.beginPath();
-        ctx.moveTo(x + w*0.4, y + h*0.6);
-        ctx.lineTo(x + w*0.5, y + h + 5 + Math.random()*5);
-        ctx.lineTo(x + w*0.6, y + h*0.6);
+        ctx.moveTo(x + w*0.4, y + h);
+        ctx.lineTo(x + w*0.5, y + h + flameLen*0.5);
+        ctx.lineTo(x + w*0.6, y + h);
         ctx.closePath(); ctx.fill();
       }
       
@@ -669,7 +675,7 @@
     function resetGame() {
       cancelAnimationFrame(animId);
       score = 0; runCoins = 0; combo = 1; comboTimer = 0;
-      gameSpeed = 5; // ✅ FIX: Reset speed
+      gameSpeed = 5;
       player.x = W * 0.15; player.y = floorY - 60; player.vy = 0; player.grounded = true;
       player.shield = false; player.magnet = false; player.doubleScore = false; player.doubleJump = false; player.jumps = 0; player.blink = 0; player.jetpack = false;
       spaceHeld = false;
@@ -707,25 +713,13 @@
       if (now - lastObstacleTime > 1200 + Math.random() * 500) {
         const r = Math.random();
         
-        if (r < 0.20) {
-          obstacles.push({ x: W, y: floorY, w: 80, h: 40, type: 'pit' });
-        } else if (r < 0.40) {
-          obstacles.push({ x: W, y: floorY - 30, w: 30, h: 30, type: 'block' });
-        } else if (r < 0.55) {
-          obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'block' });
-        } else if (r < 0.70) {
-          // ✅ NEW: Flying spike
-          obstacles.push({ x: W, y: floorY - 80, w: 30, h: 30, type: 'flying_spike', baseY: floorY - 80, phase: Math.random() * Math.PI * 2 });
-        } else if (r < 0.80) {
-          // ✅ NEW: Moving block
-          obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'moving_block', baseX: W, speed: 2, range: 50, phase: Math.random() * Math.PI * 2 });
-        } else if (r < 0.88) {
-          obstacles.push({ x: W, y: floorY - 35, w: 40, h: 35, type: 'spike' });
-        } else if (r < 0.94) {
-          obstacles.push({ x: W, y: floorY - 100 - Math.random()*40, w: 40, h: 30, type: 'bat' });
-        } else {
-          obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
-        }
+        if (r < 0.20) obstacles.push({ x: W, y: floorY - 30, w: 30, h: 30, type: 'block' });
+        else if (r < 0.40) obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'block' });
+        else if (r < 0.55) obstacles.push({ x: W, y: floorY - 70, w: 25, h: 70, type: 'tall_block' }); // ✅ NEW
+        else if (r < 0.70) obstacles.push({ x: W, y: floorY - 25, w: 90, h: 25, type: 'low_wall' }); // ✅ NEW
+        else if (r < 0.85) obstacles.push({ x: W, y: floorY - 35, w: 40, h: 35, type: 'spike' });
+        else if (r < 0.93) obstacles.push({ x: W, y: floorY - 80, w: 35, h: 35, type: 'flying_spike', baseY: floorY - 80, phase: Math.random() * Math.PI * 2 });
+        else obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
         
         lastObstacleTime = now;
       }
@@ -737,7 +731,7 @@
       }
       
       if (now - lastPowerupTime > 15000 + Math.random() * 10000) {
-        const types = ['magnet', 'shield', 'double', 'doublejump', 'jetpack']; // ✅ Added jetpack
+        const types = ['magnet', 'shield', 'double', 'doublejump', 'jetpack'];
         powerups.push({ x: W, y: floorY - 100 - Math.random() * 100, w: 40, h: 40, type: types[Math.floor(Math.random()*types.length)] });
         lastPowerupTime = now;
       }
@@ -746,9 +740,6 @@
     }
 
     function checkCollision(a, b) { 
-      if (b.type === 'pit') {
-        return a.x + a.w/2 > b.x && a.x + a.w/2 < b.x + b.w && a.y + a.h >= b.y;
-      }
       return a.x + 10 < b.x + b.w - 10 && a.x + a.w - 10 > b.x + 10 && a.y + 10 < b.y + b.h - 10 && a.y + a.h - 10 > b.y + 10; 
     }
 
@@ -760,8 +751,8 @@
       if (type === 'doublejump') player.doubleJump = true;
       if (type === 'jetpack') {
         player.jetpack = true;
-        audio.playJetpack();
-        setTimeout(() => { player.jetpack = false; }, 25000); // ✅ 25 seconds
+        audio.playJetpack(); // ✅ FIX: Ensure sound plays
+        setTimeout(() => { player.jetpack = false; }, 25000);
       }
       const display = document.getElementById('powerupsDisplay');
       if (!display) return;
@@ -776,11 +767,8 @@
     }
 
     function update(dt) {
-      // ✅ FIX: Define 'now' here
-      const now = performance.now();
       if (!isPlaying || isPaused || isGameOver) return;
 
-      // ✅ Jetpack physics
       if (player.jetpack && spaceHeld) {
         player.vy -= 0.9;
         if (player.vy < -8) player.vy = -8;
@@ -791,29 +779,9 @@
       
       player.y += player.vy * timeScale;
       
-      // ✅ FIX: Pit logic
       let onGround = player.y + player.h >= floorY;
-      let inPit = false;
       
-      for (let o of obstacles) {
-        if (o.type === 'pit' && player.x + player.w/2 > o.x && player.x + player.w/2 < o.x + o.w) {
-          inPit = true;
-          break;
-        }
-      }
-      
-      if (inPit) {
-         // If in pit and grounded, force fall
-         if (player.grounded) {
-            player.vy = 3; 
-            player.grounded = false;
-         }
-         // Check if fell off screen
-         if (player.y > H + 100) {
-            audio.playCrash(); screenShake = 20; moonMood = -1; createParticles(player.x+player.w/2, H, 30, '#e74c3c', 8); gameOver();
-            return;
-         }
-      } else if (onGround) {
+      if (onGround) {
         player.y = floorY - player.h; player.vy = 0; player.grounded = true;
       } else {
         player.grounded = false;
@@ -821,7 +789,7 @@
       
       if (player.grounded) animFrame += 0.15 * timeScale;
 
-      if (player.grounded && !inPit) {
+      if (player.grounded) {
         comboTimer += dt * timeScale;
         if (comboTimer > 3000 && combo < 5) {
           combo++;
@@ -847,11 +815,8 @@
       for (let i = obstacles.length - 1; i >= 0; i--) {
         let o = obstacles[i]; 
         
-        // ✅ Move complex obstacles
         if (o.type === 'flying_spike') {
           o.y = o.baseY + Math.sin(Date.now() * 0.004 + o.phase) * 30;
-        } else if (o.type === 'moving_block') {
-          o.x = o.baseX - (gameSpeed * timeScale * (now - lastObstacleTime)/1000) + Math.sin(Date.now() * 0.003 + o.phase) * o.range;
         } else {
           o.x -= gameSpeed * timeScale;
         }
@@ -859,9 +824,7 @@
         if (o.x + o.w < 0) obstacles.splice(i, 1);
         
         if (checkCollision(player, o)) {
-          if (o.type === 'pit') {
-            // Falling handled above
-          } else if (player.shield) { 
+          if (player.shield) { 
             player.shield = false; audio.playCrash(); screenShake = 10; obstacles.splice(i, 1); document.querySelector('.powerup-shield')?.remove(); 
           } else { 
             audio.playCrash(); screenShake = 20; moonMood = -1; createParticles(player.x+player.w/2, player.y+player.h/2, 30, '#e74c3c', 8); gameOver(); 
@@ -931,12 +894,7 @@
       });
 
       obstacles.forEach(o => {
-        if (o.type === 'pit') {
-          ctx.fillStyle = '#0a0a0a';
-          ctx.fillRect(o.x, o.y, o.w, o.h);
-          ctx.fillStyle = '#1a1a1a';
-          ctx.fillRect(o.x + 5, o.y, o.w - 10, o.h);
-        } else if (o.type === 'block' || o.type === 'moving_block') {
+        if (o.type === 'block' || o.type === 'tall_block' || o.type === 'low_wall') {
           ctx.fillStyle = '#8b4513';
           ctx.fillRect(o.x, o.y, o.w, o.h);
           ctx.fillStyle = '#a0522d';
@@ -1009,7 +967,7 @@
       const rt = document.getElementById('reviveTimer');
       if (!rc || !rt) return;
       rc.style.display = 'block';
-      let t = 15; // ✅ Increased to 15 seconds
+      let t = 15;
       rt.textContent = t;
       reviveTimer = setInterval(() => { t--; rt.textContent = t; if(t<=0) { clearInterval(reviveTimer); rc.style.display = 'none'; } }, 1000);
     }
@@ -1020,7 +978,6 @@
       const rc = document.getElementById('reviveContainer');
       if(rc) rc.style.display = 'none';
       
-      // ✅ Proper revive: apply shield, bounce up, clear immediate threats, continue loop
       player.shield = true;
       player.vy = -6;
       player.grounded = false;
@@ -1028,7 +985,6 @@
       canRevive = false;
       moonMood = 0;
       
-      // Remove obstacles that are too close to prevent instant re-death
       obstacles = obstacles.filter(o => o.x > player.x + 200 || o.x + o.w < player.x - 100);
       
       audio.playPowerup();
@@ -1082,7 +1038,7 @@
     window.addEventListener('keydown', e => { 
       if (e.code === 'Space' || e.code === 'ArrowUp') { 
         e.preventDefault(); 
-        spaceHeld = true; // ✅ Track hold
+        spaceHeld = true;
         if (isPlaying && !isPaused) jump(); 
       } 
     });
