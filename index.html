@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- 🔴 ЗАМЕНИТЬ: Добавь свой APP_ID вместо YOUR_APP_ID -->
+  <meta property="vk:app_id" content="YOUR_APP_ID">
+  <meta property="vk:app:name" content="VK Runner Pro">
+  <meta property="vk:app:description" content="Беги, собирай монеты и избегай препятствий!">
+  
   <title>VK Runner Pro</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -155,7 +161,9 @@
     <button class="btn btn-secondary" id="shopBtn">🛒 Магазин</button>
     <button class="btn btn-secondary" id="missionsBtn">📋 Задания</button>
     <button class="btn btn-secondary" id="settingsBtn">⚙️ Настройки</button>
-    <p class="hint">Управление: Пробел / Клик / Тап (удерживай для ранца)<br>Собирай монеты 💰, избегай препятствий!</p>
+    <!-- 🔴 НОВОЕ: Кнопка для просмотра рекламы за монеты -->
+    <button class="btn btn-warning" id="adCoinsBtn" style="margin-top: 10px;">📺 +50 монет за рекламу</button>
+    <p class="hint">Управление: Пробел / Клик / Тап (удерживай для ранца)<br>Собирай монеты 💰, избегай препятствий 🪨</p>
   </div>
 
   <div class="pause-menu" id="pauseMenu">
@@ -280,7 +288,6 @@
       playPowerup() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playTone(400, 800, 0.2, 'sine'); setTimeout(() => this.playTone(600, 1200, 0.2, 'sine'), 100); }
       playJetpack() { 
         if (!this.sfxEnabled || !this.ctx || !this.enabled) return; 
-        // ✅ FIX: Stronger activation sound
         this.playTone(200, 600, 0.4, 'sawtooth'); 
         setTimeout(() => this.playTone(150, 400, 0.3, 'square'), 100);
       }
@@ -304,27 +311,67 @@
     const today = new Date().toDateString();
     if (lastMissionDate !== today) { generateDailyMissions(); lastMissionDate = today; localStorage.setItem('vk_runner_mission_date', today); }
 
-    async function initVK() { if (!bridge) return; try { await bridge.send('VKWebAppInit'); vkReady = true; await loadCloudData(); } catch (e) {} }
+    async function initVK() { 
+      if (!bridge) return; 
+      try { 
+        await bridge.send('VKWebAppInit'); 
+        vkReady = true; 
+        console.log('✅ VK Bridge initialized');
+        await loadCloudData(); 
+      } catch (e) { 
+        console.error('❌ VK Bridge error:', e);
+      } 
+    }
     initVK();
 
     async function saveToCloud(showIndicator = true) {
       localStorage.setItem('vk_runner_hs', highScore); localStorage.setItem('vk_runner_coins', totalCoins);
       localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', selectedSkin);
       localStorage.setItem('vk_runner_missions', JSON.stringify(missions));
-      if (vkReady) { try { await bridge.send('VKWebAppStorageSet', { key: 'vk_runner_save', value: JSON.stringify({ highScore, totalCoins, ownedSkins, selectedSkin, missions, lastMissionDate, lastSave: Date.now() }) }); } catch (e) {} }
+      if (vkReady) { 
+        try { 
+          await bridge.send('VKWebAppStorageSet', { 
+            key: 'vk_runner_save', 
+            value: JSON.stringify({ highScore, totalCoins, ownedSkins, selectedSkin, missions, lastMissionDate, lastSave: Date.now() }) 
+          }); 
+        } catch (e) { 
+          console.error('Cloud save error:', e);
+        } 
+      }
       if (showIndicator) showSaveIndicator();
     }
-    async function loadCloudData() { if (!vkReady) return; try { const r = await bridge.send('VKWebAppStorageGet', { key: 'vk_runner_save' }); if (r && r.value) { const d = JSON.parse(r.value); if(d.highScore) highScore = d.highScore; if(d.totalCoins) totalCoins = d.totalCoins; if(d.ownedSkins) ownedSkins = d.ownedSkins; if(d.selectedSkin) selectedSkin = d.selectedSkin; if(d.missions) missions = d.missions; if(d.lastMissionDate) lastMissionDate = d.lastMissionDate; } } catch (e) {} }
-    function showSaveIndicator() { const i = document.getElementById('saveIndicator'); i.classList.add('show'); setTimeout(() => i.classList.remove('show'), 2000); }
+    
+    async function loadCloudData() { 
+      if (!vkReady) return; 
+      try { 
+        const r = await bridge.send('VKWebAppStorageGet', { key: 'vk_runner_save' }); 
+        if (r && r.value) { 
+          const d = JSON.parse(r.value); 
+          if(d.highScore) highScore = d.highScore; 
+          if(d.totalCoins) totalCoins = d.totalCoins; 
+          if(d.ownedSkins) ownedSkins = d.ownedSkins; 
+          if(d.selectedSkin) selectedSkin = d.selectedSkin; 
+          if(d.missions) missions = d.missions; 
+          if(d.lastMissionDate) lastMissionDate = d.lastMissionDate; 
+        } 
+      } catch (e) { 
+        console.error('Cloud load error:', e);
+      } 
+    }
+    
+    function showSaveIndicator() { 
+      const i = document.getElementById('saveIndicator'); 
+      i.classList.add('show'); 
+      setTimeout(() => i.classList.remove('show'), 2000); 
+    }
 
-    // ============================================
-    // === SKINS & SHOP
-    // ============================================
-    const skins = {
-      default: { name: 'Стандарт', color: '#ff8c00', price: 0 }, blue: { name: 'Синий', color: '#3498db', price: 100 },
-      green: { name: 'Зелёный', color: '#27ae60', price: 100 }, red: { name: 'Красный', color: '#e74c3c', price: 150 },
-      purple: { name: 'Фиолет', color: '#9b59b6', price: 150 }, gold: { name: 'Золото', color: '#f1c40f', price: 500 }
-    };
+ // ============================================
+// === SKINS & SHOP
+// ============================================
+const skins = {
+  purple: { name: 'Фиолет', color: '#9b59b6', price: 150 },
+  gold: { name: 'Золото', color: '#f1c40f', price: 500 }
+};
     
     const shopItems = {
       magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable' },
@@ -485,7 +532,7 @@
         ctx.beginPath(); ctx.arc(x + w/2, y + h/2, w * 1.2, 0, Math.PI*2); ctx.fill();
       }
       
-      // ✅ FIX: Jetpack fire from feet
+      // Jetpack fire from feet
       if (player.jetpack && spaceHeld) {
         const flameLen = 20 + Math.random() * 15;
         ctx.fillStyle = '#ff4500';
@@ -715,8 +762,8 @@
         
         if (r < 0.20) obstacles.push({ x: W, y: floorY - 30, w: 30, h: 30, type: 'block' });
         else if (r < 0.40) obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'block' });
-        else if (r < 0.55) obstacles.push({ x: W, y: floorY - 70, w: 25, h: 70, type: 'tall_block' }); // ✅ NEW
-        else if (r < 0.70) obstacles.push({ x: W, y: floorY - 25, w: 90, h: 25, type: 'low_wall' }); // ✅ NEW
+        else if (r < 0.55) obstacles.push({ x: W, y: floorY - 70, w: 25, h: 70, type: 'tall_block' });
+        else if (r < 0.70) obstacles.push({ x: W, y: floorY - 25, w: 90, h: 25, type: 'low_wall' });
         else if (r < 0.85) obstacles.push({ x: W, y: floorY - 35, w: 40, h: 35, type: 'spike' });
         else if (r < 0.93) obstacles.push({ x: W, y: floorY - 80, w: 35, h: 35, type: 'flying_spike', baseY: floorY - 80, phase: Math.random() * Math.PI * 2 });
         else obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
@@ -751,7 +798,7 @@
       if (type === 'doublejump') player.doubleJump = true;
       if (type === 'jetpack') {
         player.jetpack = true;
-        audio.playJetpack(); // ✅ FIX: Ensure sound plays
+        audio.playJetpack();
         setTimeout(() => { player.jetpack = false; }, 25000);
       }
       const display = document.getElementById('powerupsDisplay');
@@ -972,9 +1019,35 @@
       reviveTimer = setInterval(() => { t--; rt.textContent = t; if(t<=0) { clearInterval(reviveTimer); rc.style.display = 'none'; } }, 1000);
     }
 
+    // 🔴 ИЗМЕНЕНО: Функция возрождения с рекламой VK
     function revive() {
       if (!canRevive) return; 
       clearInterval(reviveTimer); 
+      
+      // Показываем рекламу за вознаграждение
+      if (vkReady) {
+        bridge.send('VKWebAppShowNativeAds', { 
+          ad_type: 'reward',
+          ad_format: 'reward_video'
+        }).then(data => {
+          if (data.result) {
+            // Даём награду после просмотра
+            applyReviveReward();
+          } else {
+            // Если реклама не показала — всё равно даём награду
+            applyReviveReward();
+          }
+        }).catch(() => {
+          // Если ошибка — всё равно даём награду
+          applyReviveReward();
+        });
+      } else {
+        applyReviveReward();
+      }
+    }
+
+    // 🔴 НОВОЕ: Применение награды за возрождение
+    function applyReviveReward() {
       const rc = document.getElementById('reviveContainer');
       if(rc) rc.style.display = 'none';
       
@@ -992,6 +1065,31 @@
       
       lastTime = performance.now(); 
       loop(lastTime);
+    }
+
+    // 🔴 НОВОЕ: Показ рекламы за монеты
+    function showAdForCoins() {
+      if (vkReady) {
+        bridge.send('VKWebAppShowNativeAds', { 
+          ad_type: 'reward',
+          ad_format: 'reward_video'
+        }).then(data => {
+          if (data.result) {
+            totalCoins += 50;
+            localStorage.setItem('vk_runner_coins', totalCoins);
+            audio.playCoin();
+            alert('✅ +50 монет за просмотр рекламы!');
+          }
+        }).catch(() => {
+          alert('❌ Не удалось показать рекламу');
+        });
+      } else {
+        // Для тестирования без VK
+        totalCoins += 50;
+        localStorage.setItem('vk_runner_coins', totalCoins);
+        audio.playCoin();
+        alert('✅ +50 монет (тестовый режим)');
+      }
     }
 
     async function exitAndSave() {
@@ -1059,6 +1157,7 @@
     const shopBtn = document.getElementById('shopBtn');
     const missionsBtn = document.getElementById('missionsBtn');
     const settingsBtn = document.getElementById('settingsBtn');
+    const adCoinsBtn = document.getElementById('adCoinsBtn'); // 🔴 НОВОЕ
     const pauseBtn = document.getElementById('pauseBtn');
     const exitBtn = document.getElementById('exitBtn');
     const soundBtn = document.getElementById('soundBtn');
@@ -1072,10 +1171,11 @@
     if(resumeBtn) resumeBtn.addEventListener('click', () => { audio.playClick(); resumeGame(); });
     if(menuBtn) menuBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
     if(exitGameOverBtn) exitGameOverBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
-    if(reviveBtn) reviveBtn.addEventListener('click', () => { audio.playClick(); if (vkReady) { bridge.send('VKWebAppShowNativeAds', { ad_type: 'reward', ad_format: 'reward_video' }).then(revive).catch(revive); } else revive(); });
+    if(reviveBtn) reviveBtn.addEventListener('click', () => { audio.playClick(); revive(); });
     if(shopBtn) shopBtn.addEventListener('click', () => { audio.playClick(); openShop(); });
     if(missionsBtn) missionsBtn.addEventListener('click', () => { audio.playClick(); openMissions(); });
     if(settingsBtn) settingsBtn.addEventListener('click', () => { audio.playClick(); const ss = document.getElementById('settingsScreen'); if(ss) ss.classList.add('active'); });
+    if(adCoinsBtn) adCoinsBtn.addEventListener('click', () => { audio.playClick(); showAdForCoins(); }); // 🔴 НОВОЕ
     if(pauseBtn) pauseBtn.addEventListener('click', () => { audio.playClick(); pauseGame(); });
     if(exitBtn) exitBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
     if(soundBtn) soundBtn.addEventListener('click', () => { audio.playClick(); audio.toggle(); updateSoundButton(); });
