@@ -174,7 +174,7 @@
     <div class="revive-container" id="reviveContainer" style="display: none;">
       <p style="font-size: 1.2rem; margin-bottom: 10px;">Продолжить?</p>
       <button class="btn btn-success" id="reviveBtn">📺 Реклама (+Щит)</button>
-      <div class="revive-timer" id="reviveTimer">5</div>
+      <div class="revive-timer" id="reviveTimer">15</div>
     </div>
     <button class="btn btn-primary" id="restartBtn">🔄 Играть снова</button>
     <button class="btn btn-danger" id="exitGameOverBtn">🚪 Выйти</button>
@@ -278,6 +278,7 @@
       playCrash() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playNoise(0.3); }
       playClick() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playTone(800, 600, 0.05, 'sine'); }
       playPowerup() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playTone(400, 800, 0.2, 'sine'); setTimeout(() => this.playTone(600, 1200, 0.2, 'sine'), 100); }
+      playJetpack() { if (!this.sfxEnabled || !this.ctx || !this.enabled) return; this.playTone(100, 300, 0.5, 'sawtooth'); }
       playTone(f1, f2, d, t) { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.connect(g); g.connect(this.ctx.destination); o.frequency.setValueAtTime(f1, this.ctx.currentTime); o.frequency.exponentialRampToValueAtTime(f2, this.ctx.currentTime + d); o.type = t; g.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); o.start(); o.stop(this.ctx.currentTime + d); }
       playNoise(d) { const bs = this.ctx.sampleRate * d; const b = this.ctx.createBuffer(1, bs, this.ctx.sampleRate); const d2 = b.getChannelData(0); for(let i=0;i<bs;i++) d2[i] = Math.random() * 2 - 1; const n = this.ctx.createBufferSource(); n.buffer = b; const g = this.ctx.createGain(); g.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); n.connect(g); g.connect(this.ctx.destination); n.start(); }
       setVolume(v) { this.volume = v; }
@@ -388,7 +389,7 @@
     }
 
     // ============================================
-    // === MISSIONS SYSTEM - ✅ FIX: Added icon
+    // === MISSIONS SYSTEM
     // ============================================
     function generateDailyMissions() {
       const types = [
@@ -419,7 +420,6 @@
       missionsListEl.innerHTML = '';
       missions.forEach(m => {
         const item = document.createElement('div'); item.className = 'mission-item';
-        // ✅ FIX: Added icon fallback
         item.innerHTML = `<div class="mission-info"><div class="mission-title">${m.icon || '📋'} ${m.name}</div><div class="mission-progress">${m.current} / ${m.target}</div></div>`;
         const btn = document.createElement('button'); btn.className = 'mission-reward' + (m.claimed ? ' claimed' : ''); btn.textContent = '+' + m.reward + ' 💰';
         if(m.claimed && !m.rewardClaimed) {
@@ -451,8 +451,9 @@
     let isPlaying = false, isPaused = false, isGameOver = false;
     let gameSpeed = 5; let lastTime = 0; let animFrame = 0; let screenShake = 0;
     let moonMood = 0, timeScale = 1;
+    let spaceHeld = false; // ✅ NEW: Track space hold for jetpack
     
-    let player = { x: 0, y: 0, w: 35, h: 55, vy: 0, grounded: true, shield: false, magnet: false, doubleScore: false, doubleJump: false, jumps: 0, blink: 0 };
+    let player = { x: 0, y: 0, w: 35, h: 55, vy: 0, grounded: true, shield: false, magnet: false, doubleScore: false, doubleJump: false, jumps: 0, blink: 0, jetpack: false };
     let obstacles = [], coins = [], particles = [], powerups = [];
     let lastObstacleTime = 0, lastCoinTime = 0, lastPowerupTime = 0;
     let animId; let canRevive = false; let reviveTimer = null;
@@ -477,6 +478,22 @@
         gradient.addColorStop(1, 'rgba(52,152,219,0)');
         ctx.fillStyle = gradient;
         ctx.beginPath(); ctx.arc(x + w/2, y + h/2, w * 1.2, 0, Math.PI*2); ctx.fill();
+      }
+      
+      // Jetpack flames
+      if (player.jetpack && spaceHeld) {
+        ctx.fillStyle = '#ff4500';
+        ctx.beginPath();
+        ctx.moveTo(x + w*0.3, y + h*0.6);
+        ctx.lineTo(x + w*0.5, y + h + 15 + Math.random()*10);
+        ctx.lineTo(x + w*0.7, y + h*0.6);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#ffff00';
+        ctx.beginPath();
+        ctx.moveTo(x + w*0.4, y + h*0.6);
+        ctx.lineTo(x + w*0.5, y + h + 5 + Math.random()*5);
+        ctx.lineTo(x + w*0.6, y + h*0.6);
+        ctx.closePath(); ctx.fill();
       }
       
       ctx.strokeStyle = '#fdbcb4'; ctx.lineWidth = w * 0.25; ctx.lineCap = 'round';
@@ -636,7 +653,6 @@
       }
     }
 
-    // ✅ ENHANCED: Fireworks function
     function createFireworks(x, y) {
       const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffd700'];
       for (let i = 0; i < 3; i++) {
@@ -655,7 +671,8 @@
       score = 0; runCoins = 0; combo = 1; comboTimer = 0;
       gameSpeed = 5;
       player.x = W * 0.15; player.y = floorY - 60; player.vy = 0; player.grounded = true;
-      player.shield = false; player.magnet = false; player.doubleScore = false; player.doubleJump = false; player.jumps = 0; player.blink = 0;
+      player.shield = false; player.magnet = false; player.doubleScore = false; player.doubleJump = false; player.jumps = 0; player.blink = 0; player.jetpack = false;
+      spaceHeld = false;
       
       const activeBonus = localStorage.getItem('vk_runner_active_bonus');
       if (activeBonus === 'magnet') { player.magnet = true; activatePowerup('magnet'); }
@@ -690,17 +707,21 @@
       if (now - lastObstacleTime > 1200 + Math.random() * 500) {
         const r = Math.random();
         
-        if (r < 0.25) {
-          obstacles.push({ x: W, y: floorY, w: 80, h: 20, type: 'pit' });
-        } else if (r < 0.45) {
+        if (r < 0.20) {
+          obstacles.push({ x: W, y: floorY, w: 80, h: 40, type: 'pit' });
+        } else if (r < 0.40) {
           obstacles.push({ x: W, y: floorY - 30, w: 30, h: 30, type: 'block' });
-        } else if (r < 0.60) {
+        } else if (r < 0.55) {
           obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'block' });
-        } else if (r < 0.75) {
-          obstacles.push({ x: W, y: floorY - 50, w: 50, h: 50, type: 'block' });
-        } else if (r < 0.85) {
+        } else if (r < 0.70) {
+          // ✅ NEW: Flying spike (moves up/down)
+          obstacles.push({ x: W, y: floorY - 80, w: 30, h: 30, type: 'flying_spike', baseY: floorY - 80, phase: Math.random() * Math.PI * 2 });
+        } else if (r < 0.80) {
+          // ✅ NEW: Moving block (oscillates horizontally)
+          obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'moving_block', baseX: W, speed: 2, range: 50, phase: Math.random() * Math.PI * 2 });
+        } else if (r < 0.88) {
           obstacles.push({ x: W, y: floorY - 35, w: 40, h: 35, type: 'spike' });
-        } else if (r < 0.93) {
+        } else if (r < 0.94) {
           obstacles.push({ x: W, y: floorY - 100 - Math.random()*40, w: 40, h: 30, type: 'bat' });
         } else {
           obstacles.push({ x: W, y: floorY - 40, w: 40, h: 40, type: 'rock' });
@@ -716,7 +737,7 @@
       }
       
       if (now - lastPowerupTime > 15000 + Math.random() * 10000) {
-        const types = ['magnet', 'shield', 'double', 'doublejump'];
+        const types = ['magnet', 'shield', 'double', 'doublejump', 'jetpack']; // ✅ Added jetpack
         powerups.push({ x: W, y: floorY - 100 - Math.random() * 100, w: 40, h: 40, type: types[Math.floor(Math.random()*types.length)] });
         lastPowerupTime = now;
       }
@@ -725,7 +746,6 @@
     }
 
     function checkCollision(a, b) { 
-      // ✅ FIX: Pit collision
       if (b.type === 'pit') {
         return a.x + a.w/2 > b.x && a.x + a.w/2 < b.x + b.w && a.y + a.h >= b.y;
       }
@@ -738,24 +758,37 @@
       if (type === 'shield') player.shield = true;
       if (type === 'double') player.doubleScore = true;
       if (type === 'doublejump') player.doubleJump = true;
+      if (type === 'jetpack') {
+        player.jetpack = true;
+        audio.playJetpack();
+        setTimeout(() => { player.jetpack = false; }, 25000); // ✅ 25 seconds
+      }
       const display = document.getElementById('powerupsDisplay');
       if (!display) return;
       const icon = document.createElement('div');
       icon.className = `powerup-icon powerup-${type}`;
-      icon.textContent = type === 'magnet' ? '🧲' : type === 'shield' ? '🛡️' : type === 'double' ? '×2' : '⤴️';
+      icon.textContent = type === 'magnet' ? '🧲' : type === 'shield' ? '🛡️' : type === 'double' ? '×2' : type === 'jetpack' ? '🚀' : '⤴️';
       display.appendChild(icon);
       setTimeout(() => {
-        if(type==='magnet') player.magnet=false; if(type==='shield') player.shield=false; if(type==='double') player.doubleScore=false; if(type==='doublejump') player.doubleJump=false; 
+        if(type==='magnet') player.magnet=false; if(type==='shield') player.shield=false; if(type==='double') player.doubleScore=false; if(type==='doublejump') player.doubleJump=false; if(type==='jetpack') player.jetpack=false; 
         if (icon.parentNode) icon.remove();
-      }, type === 'doublejump' ? 15000 : 5000);
+      }, type === 'doublejump' || type === 'jetpack' ? 25000 : 5000);
     }
 
     function update(dt) {
       if (!isPlaying || isPaused || isGameOver) return;
 
-      player.vy += 0.65 * timeScale; player.y += player.vy * timeScale;
+      // ✅ Jetpack physics
+      if (player.jetpack && spaceHeld) {
+        player.vy -= 0.9;
+        if (player.vy < -8) player.vy = -8;
+        if (Math.random() < 0.3) createParticles(player.x + player.w/2, player.y + player.h, 1, '#ff4500', 3);
+      } else {
+        player.vy += 0.65 * timeScale;
+      }
       
-      // ✅ FIX: Check if in pit
+      player.y += player.vy * timeScale;
+      
       let onGround = player.y + player.h >= floorY;
       let inPit = false;
       
@@ -767,7 +800,7 @@
       }
       
       if (inPit) {
-        if (player.y > H) {
+        if (player.y > H + 50) {
           audio.playCrash(); screenShake = 20; moonMood = -1; createParticles(player.x+player.w/2, H, 30, '#e74c3c', 8); gameOver();
         }
       } else if (onGround) {
@@ -802,10 +835,22 @@
       shootingStars.forEach((s, i) => { s.x -= 10 * timeScale; s.y += 5 * timeScale; s.alpha -= 0.02; if(s.alpha <= 0) shootingStars.splice(i, 1); });
 
       for (let i = obstacles.length - 1; i >= 0; i--) {
-        let o = obstacles[i]; o.x -= gameSpeed * timeScale; if (o.x + o.w < 0) obstacles.splice(i, 1);
+        let o = obstacles[i]; 
+        
+        // ✅ Move complex obstacles
+        if (o.type === 'flying_spike') {
+          o.y = o.baseY + Math.sin(Date.now() * 0.004 + o.phase) * 30;
+        } else if (o.type === 'moving_block') {
+          o.x = o.baseX - (gameSpeed * timeScale * (now - lastObstacleTime)/1000) + Math.sin(Date.now() * 0.003 + o.phase) * o.range;
+        } else {
+          o.x -= gameSpeed * timeScale;
+        }
+        
+        if (o.x + o.w < 0) obstacles.splice(i, 1);
+        
         if (checkCollision(player, o)) {
           if (o.type === 'pit') {
-            // Already handled
+            // Falling handled above
           } else if (player.shield) { 
             player.shield = false; audio.playCrash(); screenShake = 10; obstacles.splice(i, 1); document.querySelector('.powerup-shield')?.remove(); 
           } else { 
@@ -855,10 +900,10 @@
       const time = Date.now() / 200;
       
       powerups.forEach(p => {
-        ctx.fillStyle = p.type === 'magnet' ? '#e74c3c' : p.type === 'shield' ? '#3498db' : p.type === 'double' ? '#f1c40f' : '#9b59b6';
+        ctx.fillStyle = p.type === 'magnet' ? '#e74c3c' : p.type === 'shield' ? '#3498db' : p.type === 'double' ? '#f1c40f' : p.type === 'jetpack' ? '#ff4500' : '#9b59b6';
         ctx.beginPath(); ctx.arc(p.x+p.w/2, p.y+p.h/2, p.w/2*(0.8+Math.sin(time*3)*0.2), 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = 'white'; ctx.font = '20px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(p.type === 'magnet' ? '🧲' : p.type === 'shield' ? '🛡️' : p.type === 'double' ? '×2' : '⤴️', p.x+p.w/2, p.y+p.h/2);
+        ctx.fillText(p.type === 'magnet' ? '🧲' : p.type === 'shield' ? '🛡️' : p.type === 'double' ? '×2' : p.type === 'jetpack' ? '🚀' : '⤴️', p.x+p.w/2, p.y+p.h/2);
       });
 
       coins.forEach(c => {
@@ -881,12 +926,12 @@
           ctx.fillRect(o.x, o.y, o.w, o.h);
           ctx.fillStyle = '#1a1a1a';
           ctx.fillRect(o.x + 5, o.y, o.w - 10, o.h);
-        } else if (o.type === 'block') {
+        } else if (o.type === 'block' || o.type === 'moving_block') {
           ctx.fillStyle = '#8b4513';
           ctx.fillRect(o.x, o.y, o.w, o.h);
           ctx.fillStyle = '#a0522d';
           ctx.fillRect(o.x + 5, o.y + 5, o.w - 10, o.h - 10);
-        } else if (o.type === 'spike') {
+        } else if (o.type === 'spike' || o.type === 'flying_spike') {
           ctx.fillStyle = '#7f8c8d';
           ctx.beginPath();
           ctx.moveTo(o.x, o.y + o.h); ctx.lineTo(o.x + o.w/2, o.y); ctx.lineTo(o.x + o.w, o.y + o.h);
@@ -954,19 +999,33 @@
       const rt = document.getElementById('reviveTimer');
       if (!rc || !rt) return;
       rc.style.display = 'block';
-      let t = 5; rt.textContent = t;
+      let t = 15; // ✅ Increased to 15 seconds
+      rt.textContent = t;
       reviveTimer = setInterval(() => { t--; rt.textContent = t; if(t<=0) { clearInterval(reviveTimer); rc.style.display = 'none'; } }, 1000);
     }
 
     function revive() {
-      if (!canRevive) return; clearInterval(reviveTimer); 
+      if (!canRevive) return; 
+      clearInterval(reviveTimer); 
       const rc = document.getElementById('reviveContainer');
       if(rc) rc.style.display = 'none';
-      player.vy = 0; player.grounded = true; player.shield = true; player.x = W * 0.15;
-      obstacles = obstacles.filter(o => o.x > W/2);
-      isGameOver = false; canRevive = false; moonMood = 0; 
-      audio.playPowerup(); activatePowerup('shield');
-      lastTime = performance.now(); loop(lastTime);
+      
+      // ✅ Proper revive: apply shield, bounce up, clear immediate threats, continue loop
+      player.shield = true;
+      player.vy = -6;
+      player.grounded = false;
+      isGameOver = false;
+      canRevive = false;
+      moonMood = 0;
+      
+      // Remove obstacles that are too close to prevent instant re-death
+      obstacles = obstacles.filter(o => o.x > player.x + 200 || o.x + o.w < player.x - 100);
+      
+      audio.playPowerup();
+      activatePowerup('shield');
+      
+      lastTime = performance.now(); 
+      loop(lastTime);
     }
 
     async function exitAndSave() {
@@ -989,7 +1048,6 @@
         highScore = Math.floor(score); localStorage.setItem('vk_runner_hs', highScore);
         const rf = document.getElementById('recordFlash');
         if(rf) { rf.style.display = 'block'; setTimeout(() => rf.style.display = 'none', 1000); }
-        // ✅ ENHANCED: Fireworks
         createFireworks(W/2, H/2);
         createFireworks(W/4, H/3);
         createFireworks(3*W/4, H/3);
@@ -1011,7 +1069,16 @@
     // ============================================
     // === INPUT & UI
     // ============================================
-    window.addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); if (isPlaying && !isPaused) jump(); } });
+    window.addEventListener('keydown', e => { 
+      if (e.code === 'Space' || e.code === 'ArrowUp') { 
+        e.preventDefault(); 
+        spaceHeld = true; // ✅ Track hold
+        if (isPlaying && !isPaused) jump(); 
+      } 
+    });
+    window.addEventListener('keyup', e => { 
+      if (e.code === 'Space' || e.code === 'ArrowUp') spaceHeld = false; 
+    });
     window.addEventListener('mousedown', () => { if (isPlaying && !isPaused) jump(); });
     window.addEventListener('touchstart', e => { if (isPlaying && !isPaused) { e.preventDefault(); jump(); } }, { passive: false });
 
