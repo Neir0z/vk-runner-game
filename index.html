@@ -292,61 +292,82 @@
     };
     
     const shopItems = {
-      magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable' },
-      shield: { name: 'Щит', icon: '🛡️', price: 50, type: 'consumable' },
-      double: { name: 'x2 Очки', icon: '×2', price: 75, type: 'consumable' },
-      doublejump: { name: '2 Прыжка', icon: '⤴️', price: 100, type: 'consumable' },
-      coins100: { name: '100 Монет', icon: '💰', price: 10, type: 'currency' },
-      coins500: { name: '500 Монет', icon: '💰💰', price: 40, type: 'currency' }
-    };
+  magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable' },
+  shield: { name: 'Щит', icon: '🛡️', price: 50, type: 'consumable' }
+};
 
-    function openShop() {
-      const shopCoinsEl = document.getElementById('shopCoins');
-      const shopGridEl = document.getElementById('shopGrid');
-      if (!shopCoinsEl || !shopGridEl) return;
-      
+   function openShop() {
+  const shopCoinsEl = document.getElementById('shopCoins');
+  const shopGridEl = document.getElementById('shopGrid');
+  if (!shopCoinsEl || !shopGridEl) return;
+  
+  shopCoinsEl.textContent = totalCoins;
+  shopGridEl.innerHTML = '';
+  
+  // СКИНЫ
+  Object.keys(skins).forEach(id => {
+    const skin = skins[id]; const owned = ownedSkins.includes(id); const selected = selectedSkin === id;
+    const item = document.createElement('div'); item.className = 'shop-item';
+    item.innerHTML = `<div class="shop-item-icon" style="background:${skin.color};border-radius:8px"></div><div class="shop-item-name">${skin.name}</div><div class="shop-item-price">${owned ? (selected ? 'Выбрано ✓' : 'Куплено') : skin.price+' 💰'}</div>`;
+    item.onclick = () => {
+      if(owned) { selectedSkin = id; localStorage.setItem('vk_runner_selected_skin', id); openShop(); audio.playClick(); }
+      else if(totalCoins >= skin.price) { totalCoins -= skin.price; ownedSkins.push(id); selectedSkin = id; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', id); shopCoinsEl.textContent = totalCoins; openShop(); audio.playCoin(); }
+      else audio.playCrash();
+    };
+    shopGridEl.appendChild(item);
+  });
+  
+  // БОНУСЫ (только магнит и щит)
+  Object.keys(shopItems).forEach(id => {
+    const item = shopItems[id];
+    const el = document.createElement('div'); el.className = 'shop-item';
+    el.innerHTML = `<div class="shop-item-icon">${item.icon}</div><div class="shop-item-name">${item.name}</div><div class="shop-item-price">${item.price} 💰</div>`;
+    el.onclick = () => {
+      if (totalCoins >= item.price) {
+        totalCoins -= item.price;
+        if (id === 'magnet') { player.magnet = true; activatePowerup('magnet'); }
+        if (id === 'shield') { player.shield = true; activatePowerup('shield'); }
+        localStorage.setItem('vk_runner_coins', totalCoins);
+        shopCoinsEl.textContent = totalCoins;
+        audio.playCoin();
+      } else audio.playCrash();
+    };
+    shopGridEl.appendChild(el);
+  });
+  
+  // КНОПКА ПОКУПКИ МОНЕТ ЗА ГОЛОСА ВК
+  const vkBtn = document.createElement('div');
+  vkBtn.className = 'shop-item';
+  vkBtn.style.gridColumn = '1 / -1';
+  vkBtn.style.background = 'linear-gradient(135deg, #4a76a8, #6b9bd1)';
+  vkBtn.innerHTML = `<div class="shop-item-icon">💎</div><div class="shop-item-name">Купить монеты</div><div class="shop-item-price">За голоса ВК</div>`;
+  vkBtn.onclick = () => {
+    if (vkReady) {
+      bridge.send('VKWebAppShowOrderBox', {
+        type: 'item',
+        item: 'coins',
+        amount: 100
+      }).then(() => {
+        totalCoins += 100;
+        localStorage.setItem('vk_runner_coins', totalCoins);
+        shopCoinsEl.textContent = totalCoins;
+        audio.playCoin();
+        alert('✅ +100 монет!');
+      }).catch(() => alert('❌ Не удалось купить'));
+    } else {
+      // Для тестирования без ВК
+      totalCoins += 100;
+      localStorage.setItem('vk_runner_coins', totalCoins);
       shopCoinsEl.textContent = totalCoins;
-      shopGridEl.innerHTML = '';
-      
-      Object.keys(skins).forEach(id => {
-        const skin = skins[id]; const owned = ownedSkins.includes(id); const selected = selectedSkin === id;
-        const item = document.createElement('div'); item.className = 'shop-item';
-        item.innerHTML = `<div class="shop-item-icon" style="background:${skin.color};border-radius:8px"></div><div class="shop-item-name">${skin.name}</div><div class="shop-item-price">${owned ? (selected ? 'Выбрано ✓' : 'Куплено') : skin.price+' 💰'}</div>`;
-        item.onclick = () => {
-          if(owned) { selectedSkin = id; localStorage.setItem('vk_runner_selected_skin', id); openShop(); audio.playClick(); }
-          else if(totalCoins >= skin.price) { totalCoins -= skin.price; ownedSkins.push(id); selectedSkin = id; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', id); shopCoinsEl.textContent = totalCoins; openShop(); audio.playCoin(); }
-          else audio.playCrash();
-        };
-        shopGridEl.appendChild(item);
-      });
-      
-      Object.keys(shopItems).forEach(id => {
-        const item = shopItems[id];
-        const el = document.createElement('div'); el.className = 'shop-item';
-        el.innerHTML = `<div class="shop-item-icon">${item.icon}</div><div class="shop-item-name">${item.name}</div><div class="shop-item-price">${item.price} 💰</div>`;
-        el.onclick = () => {
-          if (totalCoins >= item.price) {
-            totalCoins -= item.price;
-            if (item.type === 'consumable') {
-              if (id === 'magnet') { player.magnet = true; activatePowerup('magnet'); }
-              if (id === 'shield') { player.shield = true; activatePowerup('shield'); }
-              if (id === 'double') { player.doubleScore = true; activatePowerup('double'); }
-              if (id === 'doublejump') { player.doubleJump = true; activatePowerup('doublejump'); }
-            } else if (item.type === 'currency') {
-              const amount = id === 'coins100' ? 100 : 500;
-              totalCoins += amount;
-            }
-            localStorage.setItem('vk_runner_coins', totalCoins);
-            shopCoinsEl.textContent = totalCoins;
-            audio.playCoin();
-          } else audio.playCrash();
-        };
-        shopGridEl.appendChild(el);
-      });
-      
-      const shopScreen = document.getElementById('shopScreen');
-      if (shopScreen) shopScreen.classList.add('active');
+      audio.playCoin();
+      alert('✅ +100 монет (тест)');
     }
+  };
+  shopGridEl.appendChild(vkBtn);
+  
+  const shopScreen = document.getElementById('shopScreen');
+  if (shopScreen) shopScreen.classList.add('active');
+}
 
     // ============================================
     // === MISSIONS SYSTEM
