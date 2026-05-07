@@ -2,22 +2,19 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- 🔴 ЗАМЕНИТЬ: Добавь свой APP_ID вместо YOUR_APP_ID -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta property="vk:app_id" content="YOUR_APP_ID">
   <meta property="vk:app:name" content="VK Runner Pro">
-  <meta property="vk:app:description" content="Беги, собирай монеты и избегай препятствий!">
-  
+  <meta property="vk:app:description" content="Уникальный раннер с реактивным ранцем, боссами и таблицей лидеров!">
   <title>VK Runner Pro</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body {
-      width: 100%; height: 100%; overflow: hidden; background: #000;
+      width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, #1e3c72, #2a5298);
       touch-action: none; -webkit-user-select: none; user-select: none;
-      font-family: 'Segoe UI', system-ui, sans-serif; color: #fff;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #fff;
     }
-    canvas { display: block; width: 100%; height: 100%; filter: contrast(1.1) saturate(1.2); }
+    canvas { display: block; width: 100%; height: 100%; }
     
     .ui {
       position: absolute; top: 10px; left: 10px; right: 10px;
@@ -26,19 +23,20 @@
     }
     
     .score-box {
-      background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(20,20,40,0.9));
+      background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(30,60,114,0.9));
       padding: 15px 20px; border-radius: 15px;
-      border: 2px solid rgba(255,255,255,0.3);
+      border: 2px solid rgba(255,215,0,0.5);
       pointer-events: auto;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px rgba(255,215,0,0.3);
+      backdrop-filter: blur(10px);
     }
     
-    .score { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-    .coins { font-size: 1.2rem; color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.6); }
+    .score { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
+    .coins { font-size: 1.2rem; color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.8); }
     .combo { 
-      font-size: 1rem; color: #ff6b6b; 
+      font-size: 1.2rem; color: #ff6b6b; font-weight: bold;
       animation: comboPulse 0.5s ease-out;
-      display: none;
+      display: none; text-shadow: 0 0 10px rgba(255,107,107,0.8);
     }
     .combo.show { display: block; }
     @keyframes comboPulse {
@@ -49,34 +47,43 @@
     
     .controls { display: flex; gap: 10px; pointer-events: auto; }
     .btn-small {
-      background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.4);
+      background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
+      border: 2px solid rgba(255,255,255,0.5);
       color: white; padding: 12px 16px; border-radius: 10px; cursor: pointer;
       font-size: 1.4rem; transition: all 0.2s; min-width: 50px;
-      backdrop-filter: blur(5px);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
-    .btn-small:hover { background: rgba(255,255,255,0.35); transform: scale(1.1); }
+    .btn-small:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
     .btn-small:active { transform: scale(0.95); }
-    .btn-small.muted { background: rgba(255,80,80,0.5); border-color: rgba(255,80,80,0.8); }
+    .btn-small.muted { background: rgba(255,80,80,0.6); border-color: rgba(255,80,80,0.9); }
     
     .overlay {
-      position: absolute; inset: 0; background: rgba(0,0,0,0.95);
+      position: absolute; inset: 0; 
+      background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(30,60,114,0.95));
       display: none; flex-direction: column; align-items: center; justify-content: center;
       gap: 20px; z-index: 200; padding: 20px;
+      backdrop-filter: blur(10px);
     }
     .overlay.active { display: flex; }
     .menu-title {
       font-size: 3rem; font-weight: bold; margin-bottom: 15px;
-      background: linear-gradient(135deg, #4a76a8, #7ec850, #ffd700);
+      background: linear-gradient(135deg, #ffd700, #ffed4e, #ffd700);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       animation: glow 2s ease-in-out infinite;
-      filter: drop-shadow(0 0 20px rgba(126,200,80,0.5));
+      filter: drop-shadow(0 0 20px rgba(255,215,0,0.8));
+      text-align: center;
     }
-    @keyframes glow { 0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(126,200,80,0.5)); } 50% { filter: brightness(1.3) drop-shadow(0 0 30px rgba(126,200,80,0.8)); } }
+    @keyframes glow { 
+      0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(255,215,0,0.8)); } 
+      50% { filter: brightness(1.3) drop-shadow(0 0 30px rgba(255,215,0,1)); } 
+    }
     
     .btn {
       padding: 16px 40px; font-size: 1.2rem; border: none; border-radius: 12px;
       cursor: pointer; transition: all 0.3s; font-weight: bold; min-width: 280px;
       position: relative; overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
     .btn::before {
       content: ''; position: absolute; top: 50%; left: 50%;
@@ -89,52 +96,148 @@
     .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
     .btn:active { transform: translateY(-1px); }
     
-    .btn-primary { background: linear-gradient(135deg, #4a76a8, #6b9bd1); color: white; border: 2px solid rgba(255,255,255,0.2); }
-    .btn-warning { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #000; border: 2px solid rgba(255,255,255,0.2); }
-    .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: 2px solid rgba(255,255,255,0.2); }
-    .btn-success { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: 2px solid rgba(255,255,255,0.2); }
-    .btn-secondary { background: rgba(255,255,255,0.15); color: white; border: 2px solid rgba(255,255,255,0.3); backdrop-filter: blur(5px); }
+    .btn-primary { 
+      background: linear-gradient(135deg, #4a76a8, #6b9bd1); 
+      color: white; 
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 15px rgba(74,118,168,0.4);
+    }
+    .btn-warning { 
+      background: linear-gradient(135deg, #f39c12, #f1c40f); 
+      color: #000; 
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 15px rgba(243,156,18,0.4);
+    }
+    .btn-danger { 
+      background: linear-gradient(135deg, #e74c3c, #c0392b); 
+      color: white; 
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 15px rgba(231,76,60,0.4);
+    }
+    .btn-success { 
+      background: linear-gradient(135deg, #27ae60, #2ecc71); 
+      color: white; 
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 15px rgba(39,174,96,0.4);
+    }
+    .btn-secondary { 
+      background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)); 
+      color: white; 
+      border: 2px solid rgba(255,255,255,0.4); 
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
     
     .hint { font-size: 0.95rem; color: #aaa; text-align: center; max-width: 90%; line-height: 1.6; margin-top: 10px; }
-    .menu-stats { background: rgba(255,255,255,0.1); padding: 25px 35px; border-radius: 12px; margin: 10px 0; text-align: center; border: 2px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
+    .menu-stats { 
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); 
+      padding: 25px 35px; border-radius: 12px; margin: 10px 0; text-align: center; 
+      border: 2px solid rgba(255,255,255,0.2); 
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
     .stat-row { display: flex; justify-content: space-between; gap: 40px; margin: 10px 0; font-size: 1.1rem; }
     .stat-label { color: #aaa; }
-    .stat-value { color: #ffd700; font-weight: bold; font-size: 1.3rem; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+    .stat-value { color: #ffd700; font-weight: bold; font-size: 1.3rem; text-shadow: 0 0 10px rgba(255,215,0,0.6); }
     
-    .loading { color: #7ec850; font-size: 1.5rem; font-weight: bold; animation: pulse 1s infinite; }
+    .loading { color: #2ecc71; font-size: 1.5rem; font-weight: bold; animation: pulse 1s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.95); } }
     
-    .pause-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.98); padding: 40px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.2); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 150; min-width: 300px; backdrop-filter: blur(10px); }
+    .pause-menu { 
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+      background: linear-gradient(135deg, rgba(0,0,0,0.98), rgba(30,60,114,0.98)); 
+      padding: 40px; border-radius: 16px; 
+      border: 2px solid rgba(255,255,255,0.3); 
+      display: none; flex-direction: column; align-items: center; gap: 15px; 
+      z-index: 150; min-width: 300px; 
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
     .pause-menu.active { display: flex; }
-    .save-indicator { position: absolute; bottom: 20px; right: 20px; background: rgba(126,200,80,0.95); color: white; padding: 12px 18px; border-radius: 10px; font-size: 1rem; display: none; animation: slideIn 0.3s; z-index: 300; box-shadow: 0 4px 15px rgba(126,200,80,0.4); }
+    .save-indicator { 
+      position: absolute; bottom: 20px; right: 20px; 
+      background: linear-gradient(135deg, #2ecc71, #27ae60); 
+      color: white; padding: 12px 18px; border-radius: 10px; 
+      font-size: 1rem; display: none; animation: slideIn 0.3s; 
+      z-index: 300; 
+      box-shadow: 0 4px 15px rgba(46,204,113,0.5);
+    }
     .save-indicator.show { display: block; }
     @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     
     .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; max-width: 400px; }
-    .shop-item { background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.2); border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.3s; text-align: center; backdrop-filter: blur(5px); }
-    .shop-item:hover { transform: scale(1.05) rotate(2deg); background: rgba(255,255,255,0.15); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    .shop-item { 
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); 
+      border: 3px solid rgba(255,255,255,0.3); 
+      border-radius: 12px; padding: 15px; cursor: pointer; 
+      transition: all 0.3s; text-align: center; 
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .shop-item:hover { transform: scale(1.05); background: rgba(255,255,255,0.2); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
     .shop-item:active { transform: scale(0.98); }
-    .shop-item-icon { font-size: 2.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.3)); }
+    .shop-item-icon { font-size: 2.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.4)); }
     .shop-item-name { font-weight: bold; margin-bottom: 5px; }
-    .shop-item-price { color: #ffd700; font-size: 0.9rem; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
+    .shop-item-price { color: #ffd700; font-size: 0.9rem; text-shadow: 0 0 5px rgba(255,215,0,0.6); }
     
-    .mission-item { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin: 10px 0; width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(5px); }
+    .mission-item { 
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); 
+      padding: 15px; border-radius: 10px; margin: 10px 0; width: 100%; max-width: 400px; 
+      display: flex; justify-content: space-between; align-items: center; 
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255,255,255,0.2);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
     .mission-info { text-align: left; flex: 1; }
     .mission-title { font-weight: bold; margin-bottom: 5px; }
     .mission-progress { font-size: 0.85rem; color: #aaa; }
-    .mission-reward { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #000; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+    .mission-reward { 
+      background: linear-gradient(135deg, #f39c12, #f1c40f); 
+      color: #000; padding: 8px 15px; border-radius: 8px; 
+      font-weight: bold; cursor: pointer; 
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px rgba(243,156,18,0.4);
+    }
     .mission-reward:hover { transform: scale(1.05); }
-    .mission-reward.claimed { background: #27ae60; color: white; cursor: default; }
+    .mission-reward.claimed { background: #27ae60; color: white; cursor: default; box-shadow: 0 4px 10px rgba(39,174,96,0.4); }
     .revive-container { text-align: center; margin: 20px 0; }
     .revive-timer { font-size: 2rem; color: #e74c3c; margin: 10px 0; animation: pulse 1s infinite; }
     
     .record-flash {
       position: absolute; inset: 0; 
-      background: radial-gradient(circle, rgba(255,215,0,0.4) 0%, rgba(255,215,0,0) 70%);
+      background: radial-gradient(circle, rgba(255,215,0,0.5) 0%, rgba(255,215,0,0) 70%);
       pointer-events: none; display: none; z-index: 50;
       animation: flashAnim 1s ease-out;
     }
     @keyframes flashAnim { from { opacity: 1; } to { opacity: 0; } }
+
+    /* Leaderboard styles */
+    .leaderboard {
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      padding: 20px; border-radius: 12px; margin: 10px 0;
+      border: 2px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      max-width: 400px; width: 100%;
+    }
+    .leaderboard-title {
+      font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;
+      color: #ffd700; text-align: center;
+      text-shadow: 0 0 10px rgba(255,215,0,0.6);
+    }
+    .leaderboard-item {
+      display: flex; justify-content: space-between;
+      padding: 10px; margin: 5px 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      align-items: center;
+    }
+    .leaderboard-item.me {
+      background: rgba(255,215,0,0.3);
+      border: 2px solid #ffd700;
+    }
+    .leaderboard-pos { font-weight: bold; color: #ffd700; margin-right: 10px; }
+    .leaderboard-name { flex: 1; text-align: left; }
+    .leaderboard-score { font-weight: bold; color: #2ecc71; }
   </style>
 </head>
 <body>
@@ -146,7 +249,7 @@
     <div class="score-box">
       <div class="score">🏆 <span id="score">0</span></div>
       <div class="coins">💰 <span id="coins">0</span> (всего: <span id="totalCoins">0</span>)</div>
-      <div class="combo" id="combo">🔥 x<span id="comboValue">2</span></div>
+      <div class="combo" id="combo">🔥 Комбо x<span id="comboValue">2</span></div>
     </div>
     <div class="controls">
       <button class="btn-small" id="soundBtn">🔊</button>
@@ -158,12 +261,11 @@
   <div class="overlay active" id="mainMenu">
     <h1 class="menu-title">🏃 VK Runner Pro</h1>
     <button class="btn btn-primary" id="playBtn">▶ Играть</button>
-    <button class="btn btn-secondary" id="shopBtn">🛒 Магазин</button>
+    <button class="btn btn-secondary" id="shopBtn">🛒 Магазин бонусов</button>
     <button class="btn btn-secondary" id="missionsBtn">📋 Задания</button>
-    <button class="btn btn-secondary" id="settingsBtn">⚙️ Настройки</button>
-    <!-- 🔴 НОВОЕ: Кнопка для просмотра рекламы за монеты -->
-    <button class="btn btn-warning" id="adCoinsBtn" style="margin-top: 10px;">📺 +50 монет за рекламу</button>
-    <p class="hint">Управление: Пробел / Клик / Тап (удерживай для ранца)<br>Собирай монеты 💰, избегай препятствий!</p>
+    <button class="btn btn-secondary" id="leaderboardBtn">🏆 Таблица лидеров</button>
+    <button class="btn btn-warning" id="adCoinsBtn">📺 +50 монет за рекламу</button>
+    <p class="hint">Управление: Пробел / Клик / Тап<br>Удерживай для реактивного ранца 🚀<br>Собирай монеты 💰, избегай препятствий 🪨</p>
   </div>
 
   <div class="pause-menu" id="pauseMenu">
@@ -181,7 +283,7 @@
     </div>
     <div class="revive-container" id="reviveContainer" style="display: none;">
       <p style="font-size: 1.2rem; margin-bottom: 10px;">Продолжить?</p>
-      <button class="btn btn-success" id="reviveBtn">📺 Реклама (+Щит)</button>
+      <button class="btn btn-success" id="reviveBtn">📺 Смотреть рекламу (+Щит)</button>
       <div class="revive-timer" id="reviveTimer">15</div>
     </div>
     <button class="btn btn-primary" id="restartBtn">🔄 Играть снова</button>
@@ -189,16 +291,25 @@
   </div>
 
   <div class="overlay" id="shopScreen">
-    <h2 style="font-size: 2rem;">🛒 Магазин</h2>
+    <h2 style="font-size: 2rem;">🛒 Магазин бонусов</h2>
     <div class="menu-stats"><div class="stat-row"><span class="stat-label">💰 Монеты:</span><span class="stat-value" id="shopCoins">0</span></div></div>
     <div class="shop-grid" id="shopGrid"></div>
-    <button class="btn btn-secondary" onclick="document.getElementById('shopScreen').classList.remove('active'); audio.playClick();">Закрыть</button>
+    <button class="btn btn-secondary" onclick="closeShop()">Закрыть</button>
   </div>
 
   <div class="overlay" id="missionsScreen">
-    <h2 style="font-size: 2rem;">📋 Задания</h2>
+    <h2 style="font-size: 2rem;">📋 Ежедневные задания</h2>
     <div id="missionsList"></div>
-    <button class="btn btn-secondary" onclick="document.getElementById('missionsScreen').classList.remove('active'); audio.playClick();">Закрыть</button>
+    <button class="btn btn-secondary" onclick="closeMissions()">Закрыть</button>
+  </div>
+
+  <div class="overlay" id="leaderboardScreen">
+    <h2 style="font-size: 2rem;">🏆 Таблица лидеров</h2>
+    <div class="leaderboard" id="leaderboardContent">
+      <div class="leaderboard-title">Топ игроков</div>
+      <div id="leaderboardList"></div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeLeaderboard()">Закрыть</button>
   </div>
 
   <div class="overlay" id="settingsScreen">
@@ -222,7 +333,7 @@
         </div>
       </div>
     </div>
-    <button class="btn btn-secondary" onclick="document.getElementById('settingsScreen').classList.remove('active'); audio.playClick();">Закрыть</button>
+    <button class="btn btn-secondary" onclick="closeSettings()">Закрыть</button>
   </div>
 
   <div class="overlay" id="loadingScreen"><div class="loading">Загрузка...</div></div>
@@ -244,7 +355,7 @@
       init() {
         if (!this.ctx) {
           try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); return true; } 
-          catch (e) { return false; }
+          catch (e) { console.error('Audio init error:', e); return false; }
         } return true;
       }
       playMenuMusic() {
@@ -291,8 +402,34 @@
         this.playTone(200, 600, 0.4, 'sawtooth'); 
         setTimeout(() => this.playTone(150, 400, 0.3, 'square'), 100);
       }
-      playTone(f1, f2, d, t) { const o = this.ctx.createOscillator(); const g = this.ctx.createGain(); o.connect(g); g.connect(this.ctx.destination); o.frequency.setValueAtTime(f1, this.ctx.currentTime); o.frequency.exponentialRampToValueAtTime(f2, this.ctx.currentTime + d); o.type = t; g.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); o.start(); o.stop(this.ctx.currentTime + d); }
-      playNoise(d) { const bs = this.ctx.sampleRate * d; const b = this.ctx.createBuffer(1, bs, this.ctx.sampleRate); const d2 = b.getChannelData(0); for(let i=0;i<bs;i++) d2[i] = Math.random() * 2 - 1; const n = this.ctx.createBufferSource(); n.buffer = b; const g = this.ctx.createGain(); g.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); n.connect(g); g.connect(this.ctx.destination); n.start(); }
+      playTone(f1, f2, d, t) { 
+        try {
+          const o = this.ctx.createOscillator(); 
+          const g = this.ctx.createGain(); 
+          o.connect(g); g.connect(this.ctx.destination); 
+          o.frequency.setValueAtTime(f1, this.ctx.currentTime); 
+          o.frequency.exponentialRampToValueAtTime(f2, this.ctx.currentTime + d); 
+          o.type = t; 
+          g.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime); 
+          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); 
+          o.start(); o.stop(this.ctx.currentTime + d); 
+        } catch(e) { console.error('Tone error:', e); }
+      }
+      playNoise(d) { 
+        try {
+          const bs = this.ctx.sampleRate * d; 
+          const b = this.ctx.createBuffer(1, bs, this.ctx.sampleRate); 
+          const d2 = b.getChannelData(0); 
+          for(let i=0;i<bs;i++) d2[i] = Math.random() * 2 - 1; 
+          const n = this.ctx.createBufferSource(); 
+          n.buffer = b; 
+          const g = this.ctx.createGain(); 
+          g.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime); 
+          g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + d); 
+          n.connect(g); g.connect(this.ctx.destination); 
+          n.start(); 
+        } catch(e) { console.error('Noise error:', e); }
+      }
       setVolume(v) { this.volume = v; }
       toggle() { this.enabled = !this.enabled; if (!this.enabled) this.stopMusic(); return this.enabled; }
     }
@@ -301,23 +438,39 @@
     // ============================================
     // === VK BRIDGE & SAVE
     // ============================================
-    const bridge = window.vkBridge; let vkReady = false;
+    const bridge = window.vkBridge; 
+    let vkReady = false;
+    let vkUserId = null;
+    let leaderboard = [];
+    
     let highScore = parseInt(localStorage.getItem('vk_runner_hs') || '0');
     let totalCoins = parseInt(localStorage.getItem('vk_runner_coins') || '0');
-    let ownedSkins = JSON.parse(localStorage.getItem('vk_runner_skins') || '["default"]');
-    let selectedSkin = localStorage.getItem('vk_runner_selected_skin') || 'default';
     let missions = JSON.parse(localStorage.getItem('vk_runner_missions') || '[]');
     let lastMissionDate = localStorage.getItem('vk_runner_mission_date') || '';
     const today = new Date().toDateString();
     if (lastMissionDate !== today) { generateDailyMissions(); lastMissionDate = today; localStorage.setItem('vk_runner_mission_date', today); }
 
     async function initVK() { 
-      if (!bridge) return; 
+      if (!bridge) {
+        console.log('VK Bridge not found');
+        return;
+      } 
       try { 
         await bridge.send('VKWebAppInit'); 
         vkReady = true; 
         console.log('✅ VK Bridge initialized');
+        
+        // Get user info
+        try {
+          const userInfo = await bridge.send('VKWebAppGetUserInfo');
+          vkUserId = userInfo.id;
+          console.log('User ID:', vkUserId);
+        } catch(e) {
+          console.log('Could not get user info');
+        }
+        
         await loadCloudData(); 
+        updateLeaderboard();
       } catch (e) { 
         console.error('❌ VK Bridge error:', e);
       } 
@@ -325,15 +478,23 @@
     initVK();
 
     async function saveToCloud(showIndicator = true) {
-      localStorage.setItem('vk_runner_hs', highScore); localStorage.setItem('vk_runner_coins', totalCoins);
-      localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', selectedSkin);
+      localStorage.setItem('vk_runner_hs', highScore); 
+      localStorage.setItem('vk_runner_coins', totalCoins);
       localStorage.setItem('vk_runner_missions', JSON.stringify(missions));
+      
       if (vkReady) { 
         try { 
           await bridge.send('VKWebAppStorageSet', { 
             key: 'vk_runner_save', 
-            value: JSON.stringify({ highScore, totalCoins, ownedSkins, selectedSkin, missions, lastMissionDate, lastSave: Date.now() }) 
+            value: JSON.stringify({ 
+              highScore, 
+              totalCoins, 
+              missions, 
+              lastMissionDate, 
+              lastSave: Date.now() 
+            }) 
           }); 
+          console.log('✅ Saved to cloud');
         } catch (e) { 
           console.error('Cloud save error:', e);
         } 
@@ -349,10 +510,9 @@
           const d = JSON.parse(r.value); 
           if(d.highScore) highScore = d.highScore; 
           if(d.totalCoins) totalCoins = d.totalCoins; 
-          if(d.ownedSkins) ownedSkins = d.ownedSkins; 
-          if(d.selectedSkin) selectedSkin = d.selectedSkin; 
           if(d.missions) missions = d.missions; 
           if(d.lastMissionDate) lastMissionDate = d.lastMissionDate; 
+          console.log('✅ Loaded from cloud');
         } 
       } catch (e) { 
         console.error('Cloud load error:', e);
@@ -365,17 +525,58 @@
       setTimeout(() => i.classList.remove('show'), 2000); 
     }
 
- // ============================================
-// === SKINS & SHOP
-// ============================================
-const skins = {
-  purple: { name: 'Фиолет', color: '#9b59b6', price: 150 },
-  gold: { name: 'Золото', color: '#f1c40f', price: 500 }
-};
-    
+    // ============================================
+    // === LEADERBOARD
+    // ============================================
+    async function updateLeaderboard() {
+      // Demo leaderboard data
+      leaderboard = [
+        { id: 1, name: 'Игрок 1', score: 1500 },
+        { id: 2, name: 'Игрок 2', score: 1200 },
+        { id: 3, name: 'Игрок 3', score: 950 },
+        { id: 4, name: 'Игрок 4', score: 800 },
+        { id: 5, name: 'Игрок 5', score: 650 }
+      ];
+      
+      // Add current user if exists
+      if (vkUserId && highScore > 0) {
+        const userEntry = leaderboard.find(p => p.id === vkUserId);
+        if (userEntry) {
+          userEntry.score = Math.max(userEntry.score, highScore);
+        } else {
+          leaderboard.push({ id: vkUserId, name: 'Вы', score: highScore });
+        }
+        leaderboard.sort((a, b) => b.score - a.score);
+      }
+    }
+
+    function showLeaderboard() {
+      const list = document.getElementById('leaderboardList');
+      if (!list) return;
+      
+      list.innerHTML = '';
+      leaderboard.slice(0, 10).forEach((player, index) => {
+        const item = document.createElement('div');
+        item.className = 'leaderboard-item' + (player.id === vkUserId ? ' me' : '');
+        item.innerHTML = `
+          <span class="leaderboard-pos">#${index + 1}</span>
+          <span class="leaderboard-name">${player.name}</span>
+          <span class="leaderboard-score">${player.score}</span>
+        `;
+        list.appendChild(item);
+      });
+      
+      document.getElementById('leaderboardScreen').classList.add('active');
+    }
+
+    // ============================================
+    // === SHOP & BONUSES (Only bonuses, no skins)
+    // ============================================
     const shopItems = {
-      magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable' },
-      shield: { name: 'Щит', icon: '🛡️', price: 50, type: 'consumable' }
+      magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable', duration: 5000 },
+      shield: { name: 'Щит', icon: '🛡️', price: 50, type: 'consumable', duration: 5000 },
+      doublejump: { name: '2 Прыжка', icon: '⤴️', price: 100, type: 'consumable', duration: 15000 },
+      jetpack: { name: 'Реактивный ранец', icon: '🚀', price: 150, type: 'consumable', duration: 25000 }
     };
 
     function openShop() {
@@ -386,58 +587,43 @@ const skins = {
       shopCoinsEl.textContent = totalCoins;
       shopGridEl.innerHTML = '';
       
-      Object.keys(skins).forEach(id => {
-        const skin = skins[id]; const owned = ownedSkins.includes(id); const selected = selectedSkin === id;
-        const item = document.createElement('div'); item.className = 'shop-item';
-        item.innerHTML = `<div class="shop-item-icon" style="background:${skin.color};border-radius:8px"></div><div class="shop-item-name">${skin.name}</div><div class="shop-item-price">${owned ? (selected ? 'Выбрано ✓' : 'Куплено') : skin.price+' 💰'}</div>`;
-        item.onclick = () => {
-          if(owned) { selectedSkin = id; localStorage.setItem('vk_runner_selected_skin', id); openShop(); audio.playClick(); }
-          else if(totalCoins >= skin.price) { totalCoins -= skin.price; ownedSkins.push(id); selectedSkin = id; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_skins', JSON.stringify(ownedSkins)); localStorage.setItem('vk_runner_selected_skin', id); shopCoinsEl.textContent = totalCoins; openShop(); audio.playCoin(); }
-          else audio.playCrash();
-        };
-        shopGridEl.appendChild(item);
-      });
-      
-      const activeBonus = localStorage.getItem('vk_runner_active_bonus');
       Object.keys(shopItems).forEach(id => {
         const item = shopItems[id];
-        const el = document.createElement('div'); el.className = 'shop-item';
-        const isActive = activeBonus === id;
-        el.style.opacity = isActive ? '0.5' : '1';
-        el.style.cursor = isActive ? 'not-allowed' : 'pointer';
-        el.innerHTML = `<div class="shop-item-icon">${item.icon}</div><div class="shop-item-name">${item.name}${isActive ? ' ✓' : ''}</div><div class="shop-item-price">${isActive ? 'Активен' : item.price+' 💰'}</div>`;
-        if (!isActive) {
-          el.onclick = () => {
-            if (totalCoins >= item.price) {
-              totalCoins -= item.price;
-              localStorage.setItem('vk_runner_coins', totalCoins);
-              localStorage.setItem('vk_runner_active_bonus', id);
-              shopCoinsEl.textContent = totalCoins;
-              openShop();
-              audio.playCoin();
-              alert(`✅ ${item.name} активирован!`);
-            } else audio.playCrash();
-          };
-        }
+        const el = document.createElement('div'); 
+        el.className = 'shop-item';
+        el.innerHTML = `
+          <div class="shop-item-icon">${item.icon}</div>
+          <div class="shop-item-name">${item.name}</div>
+          <div class="shop-item-price">${item.price} 💰</div>
+        `;
+        el.onclick = () => {
+          if (totalCoins >= item.price) {
+            totalCoins -= item.price;
+            localStorage.setItem('vk_runner_coins', totalCoins);
+            shopCoinsEl.textContent = totalCoins;
+            
+            // Apply bonus immediately
+            if (id === 'magnet') { activatePowerup('magnet'); }
+            else if (id === 'shield') { activatePowerup('shield'); }
+            else if (id === 'doublejump') { activatePowerup('doublejump'); }
+            else if (id === 'jetpack') { activatePowerup('jetpack'); }
+            
+            audio.playCoin();
+            alert(`✅ ${item.name} активирован!`);
+          } else {
+            audio.playCrash();
+            alert('❌ Недостаточно монет!');
+          }
+        };
         shopGridEl.appendChild(el);
       });
       
-      const vkBtn = document.createElement('div');
-      vkBtn.className = 'shop-item';
-      vkBtn.style.gridColumn = '1 / -1';
-      vkBtn.style.background = 'linear-gradient(135deg, #4a76a8, #6b9bd1)';
-      vkBtn.innerHTML = `<div class="shop-item-icon">💎</div><div class="shop-item-name">Купить монеты</div><div class="shop-item-price">За голоса ВК</div>`;
-      vkBtn.onclick = () => {
-        if (vkReady) {
-          bridge.send('VKWebAppShowOrderBox', { type: 'item', item: 'coins', amount: 100 })
-            .then(() => { totalCoins += 100; localStorage.setItem('vk_runner_coins', totalCoins); shopCoinsEl.textContent = totalCoins; audio.playCoin(); alert('✅ +100 монет!'); })
-            .catch(() => alert('❌ Не удалось купить'));
-        } else { totalCoins += 100; localStorage.setItem('vk_runner_coins', totalCoins); shopCoinsEl.textContent = totalCoins; audio.playCoin(); alert('✅ +100 монет (тест)'); }
-      };
-      shopGridEl.appendChild(vkBtn);
-      
-      const shopScreen = document.getElementById('shopScreen');
-      if (shopScreen) shopScreen.classList.add('active');
+      document.getElementById('shopScreen').classList.add('active');
+    }
+
+    function closeShop() {
+      document.getElementById('shopScreen').classList.remove('active');
+      audio.playClick();
     }
 
     // ============================================
@@ -452,7 +638,7 @@ const skins = {
       missions = [];
       for(let i=0; i<3; i++) {
         const t = types[Math.floor(Math.random()*types.length)];
-        missions.push({...t, current: 0, claimed: false});
+        missions.push({...t, current: 0, claimed: false, rewardClaimed: false});
       }
       localStorage.setItem('vk_runner_missions', JSON.stringify(missions));
     }
@@ -471,25 +657,68 @@ const skins = {
       if (!missionsListEl) return;
       missionsListEl.innerHTML = '';
       missions.forEach(m => {
-        const item = document.createElement('div'); item.className = 'mission-item';
-        item.innerHTML = `<div class="mission-info"><div class="mission-title">${m.icon || '📋'} ${m.name}</div><div class="mission-progress">${m.current} / ${m.target}</div></div>`;
-        const btn = document.createElement('button'); btn.className = 'mission-reward' + (m.claimed ? ' claimed' : ''); btn.textContent = '+' + m.reward + ' 💰';
+        const item = document.createElement('div'); 
+        item.className = 'mission-item';
+        item.innerHTML = `
+          <div class="mission-info">
+            <div class="mission-title">${m.icon || '📋'} ${m.name}</div>
+            <div class="mission-progress">${m.current} / ${m.target}</div>
+          </div>
+        `;
+        const btn = document.createElement('button'); 
+        btn.className = 'mission-reward' + (m.rewardClaimed ? ' claimed' : ''); 
+        btn.textContent = m.rewardClaimed ? 'Получено ✓' : '+' + m.reward + ' 💰';
         if(m.claimed && !m.rewardClaimed) {
-          btn.onclick = () => { totalCoins += m.reward; m.rewardClaimed = true; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_missions', JSON.stringify(missions)); openMissions(); audio.playCoin(); };
-        } else if(m.rewardClaimed) { btn.textContent = 'Получено ✓'; btn.disabled = true; } else btn.disabled = true;
-        item.appendChild(btn); missionsListEl.appendChild(item);
+          btn.onclick = () => { 
+            totalCoins += m.reward; 
+            m.rewardClaimed = true; 
+            localStorage.setItem('vk_runner_coins', totalCoins); 
+            localStorage.setItem('vk_runner_missions', JSON.stringify(missions)); 
+            openMissions(); 
+            audio.playCoin(); 
+          };
+        } else {
+          btn.disabled = true; 
+        }
+        item.appendChild(btn); 
+        missionsListEl.appendChild(item);
       });
-      const missionsScreen = document.getElementById('missionsScreen');
-      if (missionsScreen) missionsScreen.classList.add('active');
+      document.getElementById('missionsScreen').classList.add('active');
+    }
+
+    function closeMissions() {
+      document.getElementById('missionsScreen').classList.remove('active');
+      audio.playClick();
+    }
+
+    function closeLeaderboard() {
+      document.getElementById('leaderboardScreen').classList.remove('active');
+      audio.playClick();
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsScreen').classList.remove('active');
+      audio.playClick();
     }
 
     // ============================================
     // === CANVAS & ASSETS
     // ============================================
-    const canvas = document.getElementById('game'); const ctx = canvas.getContext('2d');
-    let dpr = window.devicePixelRatio || 1; let W, H, floorY;
-    function resize() { W = window.innerWidth; H = window.innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); floorY = H * 0.82; }
-    window.addEventListener('resize', resize); resize();
+    const canvas = document.getElementById('game'); 
+    const ctx = canvas.getContext('2d');
+    let dpr = window.devicePixelRatio || 1; 
+    let W, H, floorY;
+    
+    function resize() { 
+      W = window.innerWidth; 
+      H = window.innerHeight; 
+      canvas.width = W * dpr; 
+      canvas.height = H * dpr; 
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); 
+      floorY = H * 0.82; 
+    }
+    window.addEventListener('resize', resize); 
+    resize();
 
     const assets = { coin: new Image() };
     assets.coin.onload = () => console.log('✅ Coin loaded');
@@ -501,14 +730,24 @@ const skins = {
     // ============================================
     let score = 0, runCoins = 0, combo = 1, comboTimer = 0;
     let isPlaying = false, isPaused = false, isGameOver = false;
-    let gameSpeed = 5; let lastTime = 0; let animFrame = 0; let screenShake = 0;
+    let gameSpeed = 5; 
+    let lastTime = 0; 
+    let animFrame = 0; 
+    let screenShake = 0;
     let moonMood = 0, timeScale = 1;
     let spaceHeld = false;
     
-    let player = { x: 0, y: 0, w: 35, h: 55, vy: 0, grounded: true, shield: false, magnet: false, doubleScore: false, doubleJump: false, jumps: 0, blink: 0, jetpack: false };
+    let player = { 
+      x: 0, y: 0, w: 35, h: 55, vy: 0, 
+      grounded: true, shield: false, magnet: false, 
+      doubleScore: false, doubleJump: false, 
+      jumps: 0, blink: 0, jetpack: false 
+    };
     let obstacles = [], coins = [], particles = [], powerups = [];
     let lastObstacleTime = 0, lastCoinTime = 0, lastPowerupTime = 0;
-    let animId; let canRevive = false; let reviveTimer = null;
+    let animId; 
+    let canRevive = false; 
+    let reviveTimer = null;
     let shootingStars = [], bgOffset1 = 0, bgOffset2 = 0, bgOffset3 = 0;
 
     // ============================================
@@ -516,14 +755,15 @@ const skins = {
     // ============================================
     function drawPlayer(ctx, x, y, w, h, frame, isJumping) {
       const time = Date.now() * 0.01;
-      const skinColor = skins[selectedSkin]?.color || '#ff8c00';
       
       player.blink += 0.02;
       const isBlinking = Math.sin(player.blink) > 0.98;
       
+      // Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.beginPath(); ctx.ellipse(x + w/2, y + h, w * 0.5, h * 0.08, 0, 0, Math.PI*2); ctx.fill();
       
+      // Shield effect
       if (player.shield) {
         const gradient = ctx.createRadialGradient(x + w/2, y + h/2, 0, x + w/2, y + h/2, w * 1.2);
         gradient.addColorStop(0, 'rgba(52,152,219,0.4)');
@@ -532,7 +772,7 @@ const skins = {
         ctx.beginPath(); ctx.arc(x + w/2, y + h/2, w * 1.2, 0, Math.PI*2); ctx.fill();
       }
       
-      // Jetpack fire from feet
+      // ✅ Jetpack fire from feet (RESTORED)
       if (player.jetpack && spaceHeld) {
         const flameLen = 20 + Math.random() * 15;
         ctx.fillStyle = '#ff4500';
@@ -549,32 +789,40 @@ const skins = {
         ctx.closePath(); ctx.fill();
       }
       
+      // Legs
       ctx.strokeStyle = '#fdbcb4'; ctx.lineWidth = w * 0.25; ctx.lineCap = 'round';
       const legSwing = isJumping ? 0.3 : Math.sin(time * 1.5) * 0.6;
       ctx.beginPath(); ctx.moveTo(x + w*0.4, y + h*0.65); ctx.lineTo(x + w*(0.4 - legSwing), y + h); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x + w*0.6, y + h*0.65); ctx.lineTo(x + w*(0.6 + legSwing), y + h); ctx.stroke();
       
+      // Shorts
       ctx.fillStyle = '#1a1a4e';
       ctx.fillRect(x + w*0.25, y + h*0.55, w*0.5, h*0.2);
       
-      ctx.fillStyle = skinColor;
+      // Torso
+      ctx.fillStyle = '#ff8c00';
       ctx.fillRect(x + w*0.3, y + h*0.25, w*0.4, h*0.35);
       
+      // Arms
       ctx.strokeStyle = '#fdbcb4'; ctx.lineWidth = w * 0.2;
       const armSwing = isJumping ? -0.8 : Math.sin(time * 1.5) * 0.8;
       ctx.beginPath(); ctx.moveTo(x + w*0.35, y + h*0.3); ctx.lineTo(x + w*(0.2 - armSwing), y + h*0.5); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x + w*0.65, y + h*0.3); ctx.lineTo(x + w*(0.8 + armSwing), y + h*0.5); ctx.stroke();
       
+      // Head
       ctx.fillStyle = '#fdbcb4';
       ctx.beginPath(); ctx.arc(x + w*0.5, y + h*0.15, w*0.35, 0, Math.PI*2); ctx.fill();
       
+      // Hair
       ctx.fillStyle = '#1a1a2e';
       ctx.beginPath(); ctx.arc(x + w*0.5, y + h*0.1, w*0.35, Math.PI, 0); ctx.fill();
       ctx.fillRect(x + w*0.15, y + h*0.08, w*0.35, w*0.15);
       
-      ctx.fillStyle = skinColor;
+      // Headband
+      ctx.fillStyle = '#ff8c00';
       ctx.fillRect(x + w*0.15, y + h*0.12, w*0.7, w*0.08);
       
+      // Face
       if (!isBlinking) {
         ctx.fillStyle = 'white';
         ctx.fillRect(x + w*0.55, y + h*0.12, w*0.15, w*0.12);
@@ -727,11 +975,6 @@ const skins = {
       player.shield = false; player.magnet = false; player.doubleScore = false; player.doubleJump = false; player.jumps = 0; player.blink = 0; player.jetpack = false;
       spaceHeld = false;
       
-      const activeBonus = localStorage.getItem('vk_runner_active_bonus');
-      if (activeBonus === 'magnet') { player.magnet = true; activatePowerup('magnet'); }
-      else if (activeBonus === 'shield') { player.shield = true; activatePowerup('shield'); }
-      localStorage.removeItem('vk_runner_active_bonus');
-      
       obstacles = []; coins = []; particles = []; powerups = [];
       lastObstacleTime = 0; lastCoinTime = 0; lastPowerupTime = 0;
       animFrame = 0; screenShake = 0; canRevive = true; moonMood = 0; timeScale = 1;
@@ -790,25 +1033,41 @@ const skins = {
       return a.x + 10 < b.x + b.w - 10 && a.x + a.w - 10 > b.x + 10 && a.y + 10 < b.y + b.h - 10 && a.y + a.h - 10 > b.y + 10; 
     }
 
+    // ✅ FIXED: Powerup activation with proper timing
     function activatePowerup(type) {
       audio.playPowerup();
-      if (type === 'magnet') player.magnet = true;
-      if (type === 'shield') player.shield = true;
-      if (type === 'double') player.doubleScore = true;
-      if (type === 'doublejump') player.doubleJump = true;
+      
+      if (type === 'magnet') {
+        player.magnet = true;
+        setTimeout(() => { player.magnet = false; }, 5000);
+      }
+      if (type === 'shield') {
+        player.shield = true;
+        setTimeout(() => { player.shield = false; }, 5000);
+      }
+      if (type === 'double') {
+        player.doubleScore = true;
+        setTimeout(() => { player.doubleScore = false; }, 5000);
+      }
+      if (type === 'doublejump') {
+        player.doubleJump = true;
+        setTimeout(() => { player.doubleJump = false; }, 15000);
+      }
       if (type === 'jetpack') {
         player.jetpack = true;
         audio.playJetpack();
         setTimeout(() => { player.jetpack = false; }, 25000);
       }
+      
       const display = document.getElementById('powerupsDisplay');
       if (!display) return;
+      
       const icon = document.createElement('div');
       icon.className = `powerup-icon powerup-${type}`;
       icon.textContent = type === 'magnet' ? '🧲' : type === 'shield' ? '🛡️' : type === 'double' ? '×2' : type === 'jetpack' ? '🚀' : '⤴️';
       display.appendChild(icon);
+      
       setTimeout(() => {
-        if(type==='magnet') player.magnet=false; if(type==='shield') player.shield=false; if(type==='double') player.doubleScore=false; if(type==='doublejump') player.doubleJump=false; if(type==='jetpack') player.jetpack=false; 
         if (icon.parentNode) icon.remove();
       }, type === 'doublejump' || type === 'jetpack' ? 25000 : 5000);
     }
@@ -816,6 +1075,7 @@ const skins = {
     function update(dt) {
       if (!isPlaying || isPaused || isGameOver) return;
 
+      // Jetpack physics
       if (player.jetpack && spaceHeld) {
         player.vy -= 0.9;
         if (player.vy < -8) player.vy = -8;
@@ -855,7 +1115,12 @@ const skins = {
 
       spawnObjects();
 
-      if (player.magnet) coins.forEach(c => { const dx=(player.x+player.w/2)-(c.x+c.w/2); const dy=(player.y+player.h/2)-(c.y+c.h/2); const d=Math.sqrt(dx*dx+dy*dy); if(d<200) { c.x+=dx*0.1; c.y+=dy*0.1; } });
+      if (player.magnet) coins.forEach(c => { 
+        const dx=(player.x+player.w/2)-(c.x+c.w/2); 
+        const dy=(player.y+player.h/2)-(c.y+c.h/2); 
+        const d=Math.sqrt(dx*dx+dy*dy); 
+        if(d<200) { c.x+=dx*0.1; c.y+=dy*0.1; } 
+      });
 
       shootingStars.forEach((s, i) => { s.x -= 10 * timeScale; s.y += 5 * timeScale; s.alpha -= 0.02; if(s.alpha <= 0) shootingStars.splice(i, 1); });
 
@@ -872,35 +1137,62 @@ const skins = {
         
         if (checkCollision(player, o)) {
           if (player.shield) { 
-            player.shield = false; audio.playCrash(); screenShake = 10; obstacles.splice(i, 1); document.querySelector('.powerup-shield')?.remove(); 
+            player.shield = false; 
+            audio.playCrash(); 
+            screenShake = 10; 
+            obstacles.splice(i, 1); 
+            document.querySelector('.powerup-shield')?.remove(); 
           } else { 
-            audio.playCrash(); screenShake = 20; moonMood = -1; createParticles(player.x+player.w/2, player.y+player.h/2, 30, '#e74c3c', 8); gameOver(); 
+            audio.playCrash(); 
+            screenShake = 20; 
+            moonMood = -1; 
+            createParticles(player.x+player.w/2, player.y+player.h/2, 30, '#e74c3c', 8); 
+            gameOver(); 
           }
         }
       }
 
       const time = Date.now() / 200;
       for (let i = coins.length - 1; i >= 0; i--) {
-        let c = coins[i]; c.x -= gameSpeed * timeScale; c.y += Math.sin(time + c.bob) * 0.4; if (c.x + c.w < 0) coins.splice(i, 1);
+        let c = coins[i]; 
+        c.x -= gameSpeed * timeScale; 
+        c.y += Math.sin(time + c.bob) * 0.4; 
+        if (c.x + c.w < 0) coins.splice(i, 1);
         if (checkCollision(player, c)) {
-          const val = player.doubleScore ? 2 * combo : 1 * combo; runCoins += val; totalCoins += val;
+          const val = player.doubleScore ? 2 * combo : 1 * combo; 
+          runCoins += val; 
+          totalCoins += val;
           localStorage.setItem('vk_runner_coins', totalCoins);
           const coinsEl = document.getElementById('coins');
           const totalCoinsEl = document.getElementById('totalCoins');
           if (coinsEl) coinsEl.textContent = runCoins;
           if (totalCoinsEl) totalCoinsEl.textContent = totalCoins;
-          audio.playCoin(); createParticles(c.x+c.w/2, c.y+c.h/2, 15, '#f1c40f', 6); coins.splice(i, 1); updateMission('collect_coins', 1);
+          audio.playCoin(); 
+          createParticles(c.x+c.w/2, c.y+c.h/2, 15, '#f1c40f', 6); 
+          coins.splice(i, 1); 
+          updateMission('collect_coins', 1);
           comboTimer = 0;
         }
       }
 
       for (let i = powerups.length - 1; i >= 0; i--) {
-        let p = powerups[i]; p.x -= gameSpeed * timeScale; if (p.x + p.w < 0) powerups.splice(i, 1);
-        if (checkCollision(player, p)) { activatePowerup(p.type); powerups.splice(i, 1); }
+        let p = powerups[i]; 
+        p.x -= gameSpeed * timeScale; 
+        if (p.x + p.w < 0) powerups.splice(i, 1);
+        if (checkCollision(player, p)) { 
+          activatePowerup(p.type); 
+          powerups.splice(i, 1); 
+        }
       }
 
       for (let i = particles.length - 1; i >= 0; i--) {
-        let p = particles[i]; p.x += p.vx * timeScale; p.y += p.vy * timeScale; p.vy += p.gravity * timeScale; p.life -= dt * 0.002 * timeScale; p.size *= 0.97; if (p.life <= 0) particles.splice(i, 1);
+        let p = particles[i]; 
+        p.x += p.vx * timeScale; 
+        p.y += p.vy * timeScale; 
+        p.vy += p.gravity * timeScale; 
+        p.life -= dt * 0.002 * timeScale; 
+        p.size *= 0.97; 
+        if (p.life <= 0) particles.splice(i, 1);
       }
 
       score += (player.doubleScore ? 0.2 : 0.1) * combo * timeScale;
@@ -989,7 +1281,6 @@ const skins = {
       const gameOverScreen = document.getElementById('gameOverScreen');
       const gameUI = document.getElementById('gameUI');
       const pauseMenu = document.getElementById('pauseMenu');
-      const powerupsDisplay = document.getElementById('powerupsDisplay');
       const coinsEl = document.getElementById('coins');
       const totalCoinsEl = document.getElementById('totalCoins');
       
@@ -997,7 +1288,6 @@ const skins = {
       if (gameOverScreen) gameOverScreen.classList.remove('active');
       if (gameUI) gameUI.style.display = 'flex';
       if (pauseMenu) pauseMenu.classList.remove('active');
-      if (powerupsDisplay) powerupsDisplay.innerHTML = '';
       if (coinsEl) coinsEl.textContent = '0';
       if (totalCoinsEl) totalCoinsEl.textContent = totalCoins;
       
@@ -1019,26 +1309,26 @@ const skins = {
       reviveTimer = setInterval(() => { t--; rt.textContent = t; if(t<=0) { clearInterval(reviveTimer); rc.style.display = 'none'; } }, 1000);
     }
 
-    // 🔴 ИЗМЕНЕНО: Функция возрождения с рекламой VK
+    // ✅ FIXED: Revive with proper shield activation
     function revive() {
       if (!canRevive) return; 
       clearInterval(reviveTimer); 
       
-      // Показываем рекламу за вознаграждение
+      const rc = document.getElementById('reviveContainer');
+      if(rc) rc.style.display = 'none';
+      
+      // Show ad first
       if (vkReady) {
         bridge.send('VKWebAppShowNativeAds', { 
           ad_type: 'reward',
           ad_format: 'reward_video'
         }).then(data => {
           if (data.result) {
-            // Даём награду после просмотра
             applyReviveReward();
           } else {
-            // Если реклама не показала — всё равно даём награду
             applyReviveReward();
           }
         }).catch(() => {
-          // Если ошибка — всё равно даём награду
           applyReviveReward();
         });
       } else {
@@ -1046,28 +1336,28 @@ const skins = {
       }
     }
 
-    // 🔴 НОВОЕ: Применение награды за возрождение
+    // ✅ FIXED: Apply revive reward properly
     function applyReviveReward() {
-      const rc = document.getElementById('reviveContainer');
-      if(rc) rc.style.display = 'none';
-      
+      // ✅ Activate shield FIRST
       player.shield = true;
+      activatePowerup('shield');
+      
+      // Then reset player
       player.vy = -6;
       player.grounded = false;
       isGameOver = false;
       canRevive = false;
       moonMood = 0;
       
+      // Remove nearby obstacles
       obstacles = obstacles.filter(o => o.x > player.x + 200 || o.x + o.w < player.x - 100);
       
       audio.playPowerup();
-      activatePowerup('shield');
-      
       lastTime = performance.now(); 
       loop(lastTime);
     }
 
-    // 🔴 НОВОЕ: Показ рекламы за монеты
+    // ✅ Show ad for coins
     function showAdForCoins() {
       if (vkReady) {
         bridge.send('VKWebAppShowNativeAds', { 
@@ -1084,7 +1374,6 @@ const skins = {
           alert('❌ Не удалось показать рекламу');
         });
       } else {
-        // Для тестирования без VK
         totalCoins += 50;
         localStorage.setItem('vk_runner_coins', totalCoins);
         audio.playCoin();
@@ -1156,8 +1445,9 @@ const skins = {
     const reviveBtn = document.getElementById('reviveBtn');
     const shopBtn = document.getElementById('shopBtn');
     const missionsBtn = document.getElementById('missionsBtn');
+    const leaderboardBtn = document.getElementById('leaderboardBtn');
+    const adCoinsBtn = document.getElementById('adCoinsBtn');
     const settingsBtn = document.getElementById('settingsBtn');
-    const adCoinsBtn = document.getElementById('adCoinsBtn'); // 🔴 НОВОЕ
     const pauseBtn = document.getElementById('pauseBtn');
     const exitBtn = document.getElementById('exitBtn');
     const soundBtn = document.getElementById('soundBtn');
@@ -1174,8 +1464,9 @@ const skins = {
     if(reviveBtn) reviveBtn.addEventListener('click', () => { audio.playClick(); revive(); });
     if(shopBtn) shopBtn.addEventListener('click', () => { audio.playClick(); openShop(); });
     if(missionsBtn) missionsBtn.addEventListener('click', () => { audio.playClick(); openMissions(); });
-    if(settingsBtn) settingsBtn.addEventListener('click', () => { audio.playClick(); const ss = document.getElementById('settingsScreen'); if(ss) ss.classList.add('active'); });
-    if(adCoinsBtn) adCoinsBtn.addEventListener('click', () => { audio.playClick(); showAdForCoins(); }); // 🔴 НОВОЕ
+    if(leaderboardBtn) leaderboardBtn.addEventListener('click', () => { audio.playClick(); showLeaderboard(); });
+    if(adCoinsBtn) adCoinsBtn.addEventListener('click', () => { audio.playClick(); showAdForCoins(); });
+    if(settingsBtn) settingsBtn.addEventListener('click', () => { audio.playClick(); document.getElementById('settingsScreen').classList.add('active'); });
     if(pauseBtn) pauseBtn.addEventListener('click', () => { audio.playClick(); pauseGame(); });
     if(exitBtn) exitBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
     if(soundBtn) soundBtn.addEventListener('click', () => { audio.playClick(); audio.toggle(); updateSoundButton(); });
