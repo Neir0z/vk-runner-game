@@ -211,7 +211,6 @@
     }
     @keyframes flashAnim { from { opacity: 1; } to { opacity: 0; } }
 
-    /* Leaderboard styles */
     .leaderboard {
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
       padding: 20px; border-radius: 12px; margin: 10px 0;
@@ -238,6 +237,19 @@
     .leaderboard-pos { font-weight: bold; color: #ffd700; margin-right: 10px; }
     .leaderboard-name { flex: 1; text-align: left; }
     .leaderboard-score { font-weight: bold; color: #2ecc71; }
+    
+    .tutorial-step {
+      background: rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px 0;
+      text-align: left;
+    }
+    .tutorial-step strong {
+      color: #ffd700;
+      display: block;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -265,6 +277,8 @@
     <button class="btn btn-secondary" id="missionsBtn">📋 Задания</button>
     <button class="btn btn-secondary" id="leaderboardBtn">🏆 Таблица лидеров</button>
     <button class="btn btn-warning" id="adCoinsBtn">📺 +50 монет за рекламу</button>
+    <button class="btn btn-secondary" id="tutorialBtn">❓ Обучение</button>
+    <button class="btn btn-secondary" id="supportBtn">💬 Техподдержка</button>
     <p class="hint">Управление: Пробел / Клик / Тап<br>Удерживай для реактивного ранца 🚀<br>Собирай монеты 💰, избегай препятствий 🪨</p>
   </div>
 
@@ -334,6 +348,91 @@
       </div>
     </div>
     <button class="btn btn-secondary" onclick="closeSettings()">Закрыть</button>
+  </div>
+
+  <div class="overlay" id="supportScreen">
+    <h2 style="font-size: 2rem;">💬 Техническая поддержка</h2>
+    <div class="menu-stats" style="min-width: 300px;">
+      <p style="margin-bottom: 20px; text-align: center;">
+        Если у вас возникли вопросы или проблемы, свяжитесь с нами:
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 15px;">
+        <a href="https://vk.com/grishmaster" target="_blank" class="btn btn-primary">
+          👤 Страница автора
+        </a>
+        <a href="mailto:support@vkrunner.ru" class="btn btn-secondary">
+          ✉️ Email: support@vkrunner.ru
+        </a>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeSupport()">Закрыть</button>
+  </div>
+
+  <div class="overlay" id="tutorialScreen">
+    <h2 style="font-size: 2rem;">❓ Как играть</h2>
+    <div class="menu-stats" style="min-width: 300px; max-height: 500px; overflow-y: auto;">
+      <div class="tutorial-step">
+        <strong>🎮 Управление:</strong>
+        <ul style="padding-left: 20px;">
+          <li><strong>Пробел / Клик / Тап</strong> - Прыжок</li>
+          <li><strong>Удерживай</strong> - Реактивный ранец 🚀</li>
+          <li><strong>← →</strong> (на ПК) - Смена полосы</li>
+        </ul>
+      </div>
+      <div class="tutorial-step">
+        <strong>💰 Цель игры:</strong>
+        <p>Собирай монеты 💰, избегай препятствий 🪨 и набирай максимум очков!</p>
+      </div>
+      <div class="tutorial-step">
+        <strong>🛒 Магазин:</strong>
+        <p>Покупай бонусы: магнит 🧲, щит 🛡️, двойной прыжок ⤴️, реактивный ранец 🚀</p>
+      </div>
+      <div class="tutorial-step">
+        <strong>🏆 Таблица лидеров:</strong>
+        <p>Соревнуйся с другими игроками!</p>
+      </div>
+      <div class="tutorial-step">
+        <strong>📺 Реклама:</strong>
+        <p>Смотри рекламу за монеты или продолжение игры</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="closeTutorial()">Понятно!</button>
+  </div>
+
+  <div class="overlay" id="privacyScreen">
+    <h2 style="font-size: 2rem;">🔒 Конфиденциальность</h2>
+    <div class="menu-stats" style="min-width: 300px; text-align: left; max-height: 400px; overflow-y: auto;">
+      <p style="margin-bottom: 15px;">
+        <strong>Какие данные мы используем:</strong>
+      </p>
+      <ul style="padding-left: 20px; margin-bottom: 15px;">
+        <li>Ваше имя и аватар (для таблицы лидеров)</li>
+        <li>Игровой прогресс (счёт, рекорды, монеты)</li>
+        <li>Статистика игры</li>
+      </ul>
+      
+      <p style="margin-bottom: 15px;">
+        <strong>Как мы используем данные:</strong>
+      </p>
+      <ul style="padding-left: 20px; margin-bottom: 15px;">
+        <li>Для сохранения прогресса</li>
+        <li>Для таблицы лидеров</li>
+        <li>Для улучшения игры</li>
+      </ul>
+      
+      <p style="margin-bottom: 15px;">
+        <strong>Мы НЕ:</strong>
+      </p>
+      <ul style="padding-left: 20px; margin-bottom: 15px;">
+        <li>Не публикуем ваши данные без разрешения</li>
+        <li>Не передаём данные третьим лицам</li>
+        <li>Не используем данные в коммерческих целях</li>
+      </ul>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn btn-success" onclick="acceptPrivacy()">✅ Разрешаю</button>
+      <button class="btn btn-danger" onclick="declinePrivacy()">❌ Отклоняю</button>
+    </div>
   </div>
 
   <div class="overlay" id="loadingScreen"><div class="loading">Загрузка...</div></div>
@@ -450,6 +549,10 @@
     const today = new Date().toDateString();
     if (lastMissionDate !== today) { generateDailyMissions(); lastMissionDate = today; localStorage.setItem('vk_runner_mission_date', today); }
 
+    // ✅ PRIVACY & TUTORIAL FLAGS
+    let privacyAccepted = localStorage.getItem('vk_runner_privacy') === 'true';
+    let tutorialShown = localStorage.getItem('vk_runner_tutorial') === 'true';
+
     async function initVK() { 
       if (!bridge) {
         console.log('VK Bridge not found');
@@ -460,7 +563,6 @@
         vkReady = true; 
         console.log('✅ VK Bridge initialized');
         
-        // Get user info
         try {
           const userInfo = await bridge.send('VKWebAppGetUserInfo');
           vkUserId = userInfo.id;
@@ -471,6 +573,19 @@
         
         await loadCloudData(); 
         updateLeaderboard();
+        
+        // ✅ SHOW PRIVACY SCREEN IF NOT ACCEPTED
+        if (!privacyAccepted) {
+          setTimeout(() => {
+            document.getElementById('privacyScreen').classList.add('active');
+          }, 1000);
+        } else if (!tutorialShown) {
+          // ✅ SHOW TUTORIAL IF FIRST TIME
+          setTimeout(() => {
+            document.getElementById('tutorialScreen').classList.add('active');
+            localStorage.setItem('vk_runner_tutorial', 'true');
+          }, 1000);
+        }
       } catch (e) { 
         console.error('❌ VK Bridge error:', e);
       } 
@@ -482,7 +597,7 @@
       localStorage.setItem('vk_runner_coins', totalCoins);
       localStorage.setItem('vk_runner_missions', JSON.stringify(missions));
       
-      if (vkReady) { 
+      if (vkReady && privacyAccepted) { 
         try { 
           await bridge.send('VKWebAppStorageSet', { 
             key: 'vk_runner_save', 
@@ -503,7 +618,7 @@
     }
     
     async function loadCloudData() { 
-      if (!vkReady) return; 
+      if (!vkReady || !privacyAccepted) return; 
       try { 
         const r = await bridge.send('VKWebAppStorageGet', { key: 'vk_runner_save' }); 
         if (r && r.value) { 
@@ -525,11 +640,63 @@
       setTimeout(() => i.classList.remove('show'), 2000); 
     }
 
+    // ✅ PRIVACY FUNCTIONS
+    function acceptPrivacy() {
+      privacyAccepted = true;
+      localStorage.setItem('vk_runner_privacy', 'true');
+      document.getElementById('privacyScreen').classList.remove('active');
+      
+      // Request publish permission from VK
+      if (vkReady) {
+        bridge.send('VKWebAppAllowPublishing', {})
+          .then(() => console.log('✅ Publishing allowed'))
+          .catch(() => console.log('User declined publishing'));
+      }
+      
+      if (!tutorialShown) {
+        setTimeout(() => {
+          document.getElementById('tutorialScreen').classList.add('active');
+          localStorage.setItem('vk_runner_tutorial', 'true');
+        }, 500);
+      }
+    }
+
+    function declinePrivacy() {
+      privacyAccepted = false;
+      localStorage.setItem('vk_runner_privacy', 'false');
+      alert('❌ Без согласия мы не можем сохранить ваш прогресс в облако. Игра будет работать в офлайн режиме.');
+    }
+
+    // ✅ SUPPORT & TUTORIAL FUNCTIONS
+    function showSupport() {
+      document.getElementById('supportScreen').classList.add('active');
+      audio.playClick();
+    }
+
+    function closeSupport() {
+      document.getElementById('supportScreen').classList.remove('active');
+      audio.playClick();
+    }
+
+    function showTutorial() {
+      document.getElementById('tutorialScreen').classList.add('active');
+      audio.playClick();
+    }
+
+    function closeTutorial() {
+      document.getElementById('tutorialScreen').classList.remove('active');
+      audio.playClick();
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsScreen').classList.remove('active');
+      audio.playClick();
+    }
+
     // ============================================
     // === LEADERBOARD
     // ============================================
     async function updateLeaderboard() {
-      // Demo leaderboard data
       leaderboard = [
         { id: 1, name: 'Игрок 1', score: 1500 },
         { id: 2, name: 'Игрок 2', score: 1200 },
@@ -538,7 +705,6 @@
         { id: 5, name: 'Игрок 5', score: 650 }
       ];
       
-      // Add current user if exists
       if (vkUserId && highScore > 0) {
         const userEntry = leaderboard.find(p => p.id === vkUserId);
         if (userEntry) {
@@ -569,14 +735,19 @@
       document.getElementById('leaderboardScreen').classList.add('active');
     }
 
+    function closeLeaderboard() {
+      document.getElementById('leaderboardScreen').classList.remove('active');
+      audio.playClick();
+    }
+
     // ============================================
     // === SHOP & BONUSES (Only bonuses, no skins)
     // ============================================
     const shopItems = {
-      magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable', duration: 5000 },
-      shield: { name: 'Щит', icon: '🛡️', price: 50, type: 'consumable', duration: 5000 },
-      doublejump: { name: '2 Прыжка', icon: '⤴️', price: 100, type: 'consumable', duration: 15000 },
-      jetpack: { name: 'Реактивный ранец', icon: '🚀', price: 150, type: 'consumable', duration: 25000 }
+      magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable', duration: 5000, votesPrice: 1 },
+      shield: { name: 'Щит', icon: '🛡️', price: 50, type: 'consumable', duration: 5000, votesPrice: 1 },
+      doublejump: { name: '2 Прыжка', icon: '⤴️', price: 100, type: 'consumable', duration: 15000, votesPrice: 2 },
+      jetpack: { name: 'Реактивный ранец', icon: '🚀', price: 150, type: 'consumable', duration: 25000, votesPrice: 3 }
     };
 
     function openShop() {
@@ -596,23 +767,62 @@
           <div class="shop-item-name">${item.name}</div>
           <div class="shop-item-price">${item.price} 💰</div>
         `;
+        
+        // ✅ FIXED: Proper bonus activation on purchase
         el.onclick = () => {
           if (totalCoins >= item.price) {
+            // Deduct coins
             totalCoins -= item.price;
             localStorage.setItem('vk_runner_coins', totalCoins);
             shopCoinsEl.textContent = totalCoins;
             
-            // Apply bonus immediately
-            if (id === 'magnet') { activatePowerup('magnet'); }
-            else if (id === 'shield') { activatePowerup('shield'); }
-            else if (id === 'doublejump') { activatePowerup('doublejump'); }
-            else if (id === 'jetpack') { activatePowerup('jetpack'); }
+            // ✅ ACTIVATE BONUS IMMEDIATELY
+            if (id === 'magnet') { 
+              activatePowerup('magnet');
+              alert('✅ Магнит активирован на 5 секунд!');
+            }
+            else if (id === 'shield') { 
+              activatePowerup('shield');
+              alert('✅ Щит активирован на 5 секунд!');
+            }
+            else if (id === 'doublejump') { 
+              activatePowerup('doublejump');
+              alert('✅ Двойной прыжок активирован на 15 секунд!');
+            }
+            else if (id === 'jetpack') { 
+              activatePowerup('jetpack');
+              alert('✅ Реактивный ранец активирован на 25 секунд!');
+            }
             
             audio.playCoin();
-            alert(`✅ ${item.name} активирован!`);
+            openShop(); // Refresh shop
           } else {
-            audio.playCrash();
-            alert('❌ Недостаточно монет!');
+            // ✅ Offer to buy with VK votes
+            if (vkReady && item.votesPrice) {
+              if (confirm(`❌ Недостаточно монет!\n\nКупить ${item.name} за ${item.votesPrice} голос(ов) ВК?\n(После покупки вы получите ${item.price * 2} монет)`)) {
+                bridge.send('VKWebAppShowOrderBox', {
+                  type: 'votes',
+                  name: `${item.name} - ${item.votesPrice} голос(ов)`,
+                  description: `${item.name} для VK Runner Pro`,
+                  price: item.votesPrice,
+                  item: `${id}_bonus`
+                }).then(data => {
+                  if (data.status === 'success') {
+                    totalCoins += item.price * 2; // Give bonus coins
+                    localStorage.setItem('vk_runner_coins', totalCoins);
+                    shopCoinsEl.textContent = totalCoins;
+                    audio.playCoin();
+                    alert(`✅ Куплено за ${item.votesPrice} голос(ов)!\n+${item.price * 2} монет!`);
+                    openShop();
+                  }
+                }).catch(() => {
+                  alert('❌ Покупка отменена');
+                });
+              }
+            } else {
+              audio.playCrash();
+              alert('❌ Недостаточно монет!');
+            }
           }
         };
         shopGridEl.appendChild(el);
@@ -688,16 +898,6 @@
 
     function closeMissions() {
       document.getElementById('missionsScreen').classList.remove('active');
-      audio.playClick();
-    }
-
-    function closeLeaderboard() {
-      document.getElementById('leaderboardScreen').classList.remove('active');
-      audio.playClick();
-    }
-
-    function closeSettings() {
-      document.getElementById('settingsScreen').classList.remove('active');
       audio.playClick();
     }
 
@@ -1058,18 +1258,6 @@
         audio.playJetpack();
         setTimeout(() => { player.jetpack = false; }, 25000);
       }
-      
-      const display = document.getElementById('powerupsDisplay');
-      if (!display) return;
-      
-      const icon = document.createElement('div');
-      icon.className = `powerup-icon powerup-${type}`;
-      icon.textContent = type === 'magnet' ? '🧲' : type === 'shield' ? '🛡️' : type === 'double' ? '×2' : type === 'jetpack' ? '🚀' : '⤴️';
-      display.appendChild(icon);
-      
-      setTimeout(() => {
-        if (icon.parentNode) icon.remove();
-      }, type === 'doublejump' || type === 'jetpack' ? 25000 : 5000);
     }
 
     function update(dt) {
@@ -1141,7 +1329,6 @@
             audio.playCrash(); 
             screenShake = 10; 
             obstacles.splice(i, 1); 
-            document.querySelector('.powerup-shield')?.remove(); 
           } else { 
             audio.playCrash(); 
             screenShake = 20; 
@@ -1317,7 +1504,6 @@
       const rc = document.getElementById('reviveContainer');
       if(rc) rc.style.display = 'none';
       
-      // Show ad first
       if (vkReady) {
         bridge.send('VKWebAppShowNativeAds', { 
           ad_type: 'reward',
@@ -1338,18 +1524,15 @@
 
     // ✅ FIXED: Apply revive reward properly
     function applyReviveReward() {
-      // ✅ Activate shield FIRST
       player.shield = true;
       activatePowerup('shield');
       
-      // Then reset player
       player.vy = -6;
       player.grounded = false;
       isGameOver = false;
       canRevive = false;
       moonMood = 0;
       
-      // Remove nearby obstacles
       obstacles = obstacles.filter(o => o.x > player.x + 200 || o.x + o.w < player.x - 100);
       
       audio.playPowerup();
@@ -1447,6 +1630,8 @@
     const missionsBtn = document.getElementById('missionsBtn');
     const leaderboardBtn = document.getElementById('leaderboardBtn');
     const adCoinsBtn = document.getElementById('adCoinsBtn');
+    const supportBtn = document.getElementById('supportBtn');
+    const tutorialBtn = document.getElementById('tutorialBtn');
     const settingsBtn = document.getElementById('settingsBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const exitBtn = document.getElementById('exitBtn');
@@ -1466,6 +1651,8 @@
     if(missionsBtn) missionsBtn.addEventListener('click', () => { audio.playClick(); openMissions(); });
     if(leaderboardBtn) leaderboardBtn.addEventListener('click', () => { audio.playClick(); showLeaderboard(); });
     if(adCoinsBtn) adCoinsBtn.addEventListener('click', () => { audio.playClick(); showAdForCoins(); });
+    if(supportBtn) supportBtn.addEventListener('click', () => { audio.playClick(); showSupport(); });
+    if(tutorialBtn) tutorialBtn.addEventListener('click', () => { audio.playClick(); showTutorial(); });
     if(settingsBtn) settingsBtn.addEventListener('click', () => { audio.playClick(); document.getElementById('settingsScreen').classList.add('active'); });
     if(pauseBtn) pauseBtn.addEventListener('click', () => { audio.playClick(); pauseGame(); });
     if(exitBtn) exitBtn.addEventListener('click', () => { audio.playClick(); exitAndSave(); });
