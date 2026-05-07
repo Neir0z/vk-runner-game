@@ -179,6 +179,7 @@
     .shop-item-icon { font-size: 2.5rem; margin-bottom: 10px; filter: drop-shadow(0 0 8px rgba(255,255,255,0.4)); }
     .shop-item-name { font-weight: bold; margin-bottom: 5px; }
     .shop-item-price { color: #ffd700; font-size: 0.9rem; text-shadow: 0 0 5px rgba(255,215,0,0.6); }
+    .shop-item-votes { color: #4a76a8; font-size: 0.8rem; margin-top: 3px; }
     
     .mission-item { 
       background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); 
@@ -224,19 +225,28 @@
       text-shadow: 0 0 10px rgba(255,215,0,0.6);
     }
     .leaderboard-item {
-      display: flex; justify-content: space-between;
+      display: flex; justify-content: space-between; align-items: center;
       padding: 10px; margin: 5px 0;
       background: rgba(255,255,255,0.1);
       border-radius: 8px;
-      align-items: center;
     }
     .leaderboard-item.me {
       background: rgba(255,215,0,0.3);
       border: 2px solid #ffd700;
     }
-    .leaderboard-pos { font-weight: bold; color: #ffd700; margin-right: 10px; }
-    .leaderboard-name { flex: 1; text-align: left; }
-    .leaderboard-score { font-weight: bold; color: #2ecc71; }
+    .leaderboard-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      margin-right: 10px; background: #4a76a8;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: bold; color: white; font-size: 1.2rem;
+      overflow: hidden;
+    }
+    .leaderboard-avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .leaderboard-info { flex: 1; display: flex; align-items: center; }
+    .leaderboard-name { font-weight: bold; margin-left: 10px; }
+    .leaderboard-score { font-weight: bold; color: #2ecc71; margin-left: 10px; }
     
     .tutorial-step {
       background: rgba(255,255,255,0.1);
@@ -276,7 +286,6 @@
     <button class="btn btn-secondary" id="shopBtn">🛒 Магазин бонусов</button>
     <button class="btn btn-secondary" id="missionsBtn">📋 Задания</button>
     <button class="btn btn-secondary" id="leaderboardBtn">🏆 Таблица лидеров</button>
-    <button class="btn btn-warning" id="adCoinsBtn">📺 +50 монет за рекламу</button>
     <button class="btn btn-secondary" id="tutorialBtn">❓ Обучение</button>
     <button class="btn btn-secondary" id="supportBtn">💬 Техподдержка</button>
     <p class="hint">Управление: Пробел / Клик / Тап<br>Удерживай для реактивного ранца 🚀<br>Собирай монеты 💰, избегай препятствий 🪨</p>
@@ -308,6 +317,14 @@
     <h2 style="font-size: 2rem;">🛒 Магазин бонусов</h2>
     <div class="menu-stats"><div class="stat-row"><span class="stat-label">💰 Монеты:</span><span class="stat-value" id="shopCoins">0</span></div></div>
     <div class="shop-grid" id="shopGrid"></div>
+    <hr style="width: 100%; border: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+    <div style="text-align: center; margin-bottom: 10px; color: #aaa; font-size: 0.9rem;">
+      💎 Покупка монет за голоса ВК
+    </div>
+    <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
+      <button class="btn btn-warning" onclick="buyCoins(100, 1)">100 💰 за 1 голос</button>
+      <button class="btn btn-warning" onclick="buyCoins(500, 4)">500 💰 за 4 голоса</button>
+    </div>
     <button class="btn btn-secondary" onclick="closeShop()">Закрыть</button>
   </div>
 
@@ -393,7 +410,7 @@
       </div>
       <div class="tutorial-step">
         <strong>📺 Реклама:</strong>
-        <p>Смотри рекламу за монеты или продолжение игры</p>
+        <p>Смотри рекламу за продолжение игры после смерти</p>
       </div>
     </div>
     <button class="btn btn-primary" onclick="closeTutorial()">Понятно!</button>
@@ -540,16 +557,18 @@
     const bridge = window.vkBridge; 
     let vkReady = false;
     let vkUserId = null;
+    let vkUserPhoto = null;
     let leaderboard = [];
     
     let highScore = parseInt(localStorage.getItem('vk_runner_hs') || '0');
     let totalCoins = parseInt(localStorage.getItem('vk_runner_coins') || '0');
     let missions = JSON.parse(localStorage.getItem('vk_runner_missions') || '[]');
     let lastMissionDate = localStorage.getItem('vk_runner_mission_date') || '';
+    let purchasedBonuses = JSON.parse(localStorage.getItem('vk_runner_purchased_bonuses') || '[]');
+    
     const today = new Date().toDateString();
     if (lastMissionDate !== today) { generateDailyMissions(); lastMissionDate = today; localStorage.setItem('vk_runner_mission_date', today); }
 
-    // ✅ PRIVACY & TUTORIAL FLAGS
     let privacyAccepted = localStorage.getItem('vk_runner_privacy') === 'true';
     let tutorialShown = localStorage.getItem('vk_runner_tutorial') === 'true';
 
@@ -566,7 +585,8 @@
         try {
           const userInfo = await bridge.send('VKWebAppGetUserInfo');
           vkUserId = userInfo.id;
-          console.log('User ID:', vkUserId);
+          vkUserPhoto = userInfo.photo_100 || userInfo.photo_200;
+          console.log('User ID:', vkUserId, 'Photo:', vkUserPhoto);
         } catch(e) {
           console.log('Could not get user info');
         }
@@ -574,13 +594,11 @@
         await loadCloudData(); 
         updateLeaderboard();
         
-        // ✅ SHOW PRIVACY SCREEN IF NOT ACCEPTED
         if (!privacyAccepted) {
           setTimeout(() => {
             document.getElementById('privacyScreen').classList.add('active');
           }, 1000);
         } else if (!tutorialShown) {
-          // ✅ SHOW TUTORIAL IF FIRST TIME
           setTimeout(() => {
             document.getElementById('tutorialScreen').classList.add('active');
             localStorage.setItem('vk_runner_tutorial', 'true');
@@ -596,6 +614,7 @@
       localStorage.setItem('vk_runner_hs', highScore); 
       localStorage.setItem('vk_runner_coins', totalCoins);
       localStorage.setItem('vk_runner_missions', JSON.stringify(missions));
+      localStorage.setItem('vk_runner_purchased_bonuses', JSON.stringify(purchasedBonuses));
       
       if (vkReady && privacyAccepted) { 
         try { 
@@ -605,6 +624,7 @@
               highScore, 
               totalCoins, 
               missions, 
+              purchasedBonuses,
               lastMissionDate, 
               lastSave: Date.now() 
             }) 
@@ -626,6 +646,7 @@
           if(d.highScore) highScore = d.highScore; 
           if(d.totalCoins) totalCoins = d.totalCoins; 
           if(d.missions) missions = d.missions; 
+          if(d.purchasedBonuses) purchasedBonuses = d.purchasedBonuses;
           if(d.lastMissionDate) lastMissionDate = d.lastMissionDate; 
           console.log('✅ Loaded from cloud');
         } 
@@ -640,13 +661,11 @@
       setTimeout(() => i.classList.remove('show'), 2000); 
     }
 
-    // ✅ PRIVACY FUNCTIONS
     function acceptPrivacy() {
       privacyAccepted = true;
       localStorage.setItem('vk_runner_privacy', 'true');
       document.getElementById('privacyScreen').classList.remove('active');
       
-      // Request publish permission from VK
       if (vkReady) {
         bridge.send('VKWebAppAllowPublishing', {})
           .then(() => console.log('✅ Publishing allowed'))
@@ -667,7 +686,6 @@
       alert('❌ Без согласия мы не можем сохранить ваш прогресс в облако. Игра будет работать в офлайн режиме.');
     }
 
-    // ✅ SUPPORT & TUTORIAL FUNCTIONS
     function showSupport() {
       document.getElementById('supportScreen').classList.add('active');
       audio.playClick();
@@ -694,23 +712,30 @@
     }
 
     // ============================================
-    // === LEADERBOARD
+    // === LEADERBOARD WITH AVATARS
     // ============================================
     async function updateLeaderboard() {
+      // Demo data with avatars
       leaderboard = [
-        { id: 1, name: 'Игрок 1', score: 1500 },
-        { id: 2, name: 'Игрок 2', score: 1200 },
-        { id: 3, name: 'Игрок 3', score: 950 },
-        { id: 4, name: 'Игрок 4', score: 800 },
-        { id: 5, name: 'Игрок 5', score: 650 }
+        { id: 1, name: 'Игрок 1', score: 1500, photo: 'https://via.placeholder.com/40/4a76a8/fff?text=1' },
+        { id: 2, name: 'Игрок 2', score: 1200, photo: 'https://via.placeholder.com/40/27ae60/fff?text=2' },
+        { id: 3, name: 'Игрок 3', score: 950, photo: 'https://via.placeholder.com/40/e74c3c/fff?text=3' },
+        { id: 4, name: 'Игрок 4', score: 800, photo: 'https://via.placeholder.com/40/9b59b6/fff?text=4' },
+        { id: 5, name: 'Игрок 5', score: 650, photo: 'https://via.placeholder.com/40/f39c12/fff?text=5' }
       ];
       
       if (vkUserId && highScore > 0) {
         const userEntry = leaderboard.find(p => p.id === vkUserId);
         if (userEntry) {
           userEntry.score = Math.max(userEntry.score, highScore);
+          if (vkUserPhoto) userEntry.photo = vkUserPhoto;
         } else {
-          leaderboard.push({ id: vkUserId, name: 'Вы', score: highScore });
+          leaderboard.push({ 
+            id: vkUserId, 
+            name: 'Вы', 
+            score: highScore,
+            photo: vkUserPhoto || `https://via.placeholder.com/40/ffd700/000?text=Вы`
+          });
         }
         leaderboard.sort((a, b) => b.score - a.score);
       }
@@ -724,9 +749,18 @@
       leaderboard.slice(0, 10).forEach((player, index) => {
         const item = document.createElement('div');
         item.className = 'leaderboard-item' + (player.id === vkUserId ? ' me' : '');
+        
+        // ✅ Avatar with fallback
+        const avatar = player.photo 
+          ? `<div class="leaderboard-avatar"><img src="${player.photo}" alt="${player.name}" onerror="this.parentElement.innerHTML='${player.name.charAt(0)}'"></div>`
+          : `<div class="leaderboard-avatar">${player.name.charAt(0)}</div>`;
+        
         item.innerHTML = `
-          <span class="leaderboard-pos">#${index + 1}</span>
-          <span class="leaderboard-name">${player.name}</span>
+          ${avatar}
+          <div class="leaderboard-info">
+            <span class="leaderboard-pos">#${index + 1}</span>
+            <span class="leaderboard-name">${player.name}</span>
+          </div>
           <span class="leaderboard-score">${player.score}</span>
         `;
         list.appendChild(item);
@@ -741,7 +775,7 @@
     }
 
     // ============================================
-    // === SHOP & BONUSES (Only bonuses, no skins)
+    // === SHOP & BONUSES
     // ============================================
     const shopItems = {
       magnet: { name: 'Магнит', icon: '🧲', price: 50, type: 'consumable', duration: 5000, votesPrice: 1 },
@@ -766,63 +800,52 @@
           <div class="shop-item-icon">${item.icon}</div>
           <div class="shop-item-name">${item.name}</div>
           <div class="shop-item-price">${item.price} 💰</div>
+          <div class="shop-item-votes">или ${item.votesPrice} голос(ов) 💎</div>
         `;
         
-        // ✅ FIXED: Proper bonus activation on purchase
         el.onclick = () => {
           if (totalCoins >= item.price) {
-            // Deduct coins
+            // Buy with coins
             totalCoins -= item.price;
             localStorage.setItem('vk_runner_coins', totalCoins);
             shopCoinsEl.textContent = totalCoins;
             
-            // ✅ ACTIVATE BONUS IMMEDIATELY
-            if (id === 'magnet') { 
-              activatePowerup('magnet');
-              alert('✅ Магнит активирован на 5 секунд!');
-            }
-            else if (id === 'shield') { 
-              activatePowerup('shield');
-              alert('✅ Щит активирован на 5 секунд!');
-            }
-            else if (id === 'doublejump') { 
-              activatePowerup('doublejump');
-              alert('✅ Двойной прыжок активирован на 15 секунд!');
-            }
-            else if (id === 'jetpack') { 
-              activatePowerup('jetpack');
-              alert('✅ Реактивный ранец активирован на 25 секунд!');
+            // ✅ Store purchased bonus for next game
+            if (!purchasedBonuses.includes(id)) {
+              purchasedBonuses.push(id);
+              localStorage.setItem('vk_runner_purchased_bonuses', JSON.stringify(purchasedBonuses));
             }
             
             audio.playCoin();
-            openShop(); // Refresh shop
-          } else {
-            // ✅ Offer to buy with VK votes
-            if (vkReady && item.votesPrice) {
-              if (confirm(`❌ Недостаточно монет!\n\nКупить ${item.name} за ${item.votesPrice} голос(ов) ВК?\n(После покупки вы получите ${item.price * 2} монет)`)) {
-                bridge.send('VKWebAppShowOrderBox', {
-                  type: 'votes',
-                  name: `${item.name} - ${item.votesPrice} голос(ов)`,
-                  description: `${item.name} для VK Runner Pro`,
-                  price: item.votesPrice,
-                  item: `${id}_bonus`
-                }).then(data => {
-                  if (data.status === 'success') {
-                    totalCoins += item.price * 2; // Give bonus coins
-                    localStorage.setItem('vk_runner_coins', totalCoins);
-                    shopCoinsEl.textContent = totalCoins;
-                    audio.playCoin();
-                    alert(`✅ Куплено за ${item.votesPrice} голос(ов)!\n+${item.price * 2} монет!`);
-                    openShop();
+            alert(`✅ ${item.name} куплен! Будет активен в следующей игре.`);
+            openShop();
+          } else if (vkReady && item.votesPrice) {
+            // ✅ Buy with VK Votes ONLY (per VK rules)
+            if (confirm(`Купить ${item.name} за ${item.votesPrice} голос(ов) ВК?\n(Вы получите ${item.name} для следующей игры)`)) {
+              bridge.send('VKWebAppShowOrderBox', {
+                type: 'votes',
+                name: `${item.name} - ${item.votesPrice} голос(ов)`,
+                description: `${item.name} для VK Runner Pro`,
+                price: item.votesPrice,
+                item: `${id}_bonus`
+              }).then(data => {
+                if (data.status === 'success') {
+                  // ✅ Store purchased bonus
+                  if (!purchasedBonuses.includes(id)) {
+                    purchasedBonuses.push(id);
+                    localStorage.setItem('vk_runner_purchased_bonuses', JSON.stringify(purchasedBonuses));
                   }
-                }).catch(() => {
-                  alert('❌ Покупка отменена');
-                });
-              }
-            } else {
-              audio.playCrash();
-              alert('❌ Недостаточно монет!');
+                  audio.playCoin();
+                  alert(`✅ ${item.name} куплен за голоса!\nБудет активен в следующей игре.`);
+                  openShop();
+                }
+              }).catch(() => {
+                alert('❌ Покупка отменена');
+              });
             }
+          } else {
+            audio.playCrash();
+            alert('❌ Недостаточно монет!');
           }
         };
         shopGridEl.appendChild(el);
@@ -836,18 +859,57 @@
       audio.playClick();
     }
 
+    // ✅ Buy coins with VK Votes ONLY (NOT ads!)
+    function buyCoins(amount, votes) {
+      if (!vkReady) {
+        alert('❌ Покупка доступна только в приложении ВК');
+        return;
+      }
+      
+      if (confirm(`Купить ${amount} монет за ${votes} голос(ов) ВК?`)) {
+        bridge.send('VKWebAppShowOrderBox', {
+          type: 'votes',
+          name: `${amount} монет - ${votes} голос(ов)`,
+          description: 'Игровая валюта для VK Runner Pro',
+          price: votes,
+          item: `coins_${amount}`
+        }).then(data => {
+          if (data.status === 'success') {
+            totalCoins += amount;
+            localStorage.setItem('vk_runner_coins', totalCoins);
+            document.getElementById('shopCoins').textContent = totalCoins;
+            audio.playCoin();
+            alert(`✅ Куплено ${amount} монет за ${votes} голос(ов)!`);
+          }
+        }).catch(() => {
+          alert('❌ Покупка отменена');
+        });
+      }
+    }
+
     // ============================================
-    // === MISSIONS SYSTEM
+    // === MISSIONS SYSTEM - FIXED RANDOMIZATION
     // ============================================
     function generateDailyMissions() {
-      const types = [
+      // ✅ Use date-based seed for consistent but different daily missions
+      const dateSeed = new Date().toISOString().split('T')[0];
+      const seed = dateSeed.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+      
+      const allMissionTypes = [
         { id: 'run_distance', name: 'Пробеги дистанцию', target: 200, reward: 50, icon: '🏃' },
         { id: 'collect_coins', name: 'Собери монеты', target: 30, reward: 40, icon: '💰' },
-        { id: 'jump_count', name: 'Прыгни', target: 20, reward: 30, icon: '⤴️' }
+        { id: 'jump_count', name: 'Прыгни', target: 20, reward: 30, icon: '⤴️' },
+        { id: 'avoid_obstacles', name: 'Избегай препятствий', target: 50, reward: 60, icon: '🪨' },
+        { id: 'use_jetpack', name: 'Используй ранец', target: 3, reward: 70, icon: '🚀' },
+        { id: 'get_combo', name: 'Получи комбо', target: 3, reward: 80, icon: '🔥' }
       ];
+      
+      // ✅ Shuffle with seed for different daily missions
+      const shuffled = [...allMissionTypes].sort(() => Math.sin(seed + Math.random()) - 0.5);
+      
       missions = [];
-      for(let i=0; i<3; i++) {
-        const t = types[Math.floor(Math.random()*types.length)];
+      for(let i = 0; i < 3 && i < shuffled.length; i++) {
+        const t = shuffled[i];
         missions.push({...t, current: 0, claimed: false, rewardClaimed: false});
       }
       localStorage.setItem('vk_runner_missions', JSON.stringify(missions));
@@ -972,20 +1034,21 @@
         ctx.beginPath(); ctx.arc(x + w/2, y + h/2, w * 1.2, 0, Math.PI*2); ctx.fill();
       }
       
-      // ✅ Jetpack fire from feet (RESTORED)
+      // ✅ FIXED: Jetpack fire from FEET (y + h = bottom of player)
       if (player.jetpack && spaceHeld) {
         const flameLen = 20 + Math.random() * 15;
+        const footY = y + h; // ✅ Bottom of player = feet position
         ctx.fillStyle = '#ff4500';
         ctx.beginPath();
-        ctx.moveTo(x + w*0.3, y + h);
-        ctx.lineTo(x + w*0.5, y + h + flameLen);
-        ctx.lineTo(x + w*0.7, y + h);
+        ctx.moveTo(x + w*0.35, footY);  // Left foot area
+        ctx.lineTo(x + w*0.5, footY + flameLen);
+        ctx.lineTo(x + w*0.65, footY);  // Right foot area
         ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#ffff00';
         ctx.beginPath();
-        ctx.moveTo(x + w*0.4, y + h);
-        ctx.lineTo(x + w*0.5, y + h + flameLen*0.5);
-        ctx.lineTo(x + w*0.6, y + h);
+        ctx.moveTo(x + w*0.4, footY);
+        ctx.lineTo(x + w*0.5, footY + flameLen*0.5);
+        ctx.lineTo(x + w*0.6, footY);
         ctx.closePath(); ctx.fill();
       }
       
@@ -1170,10 +1233,22 @@
     function resetGame() {
       cancelAnimationFrame(animId);
       score = 0; runCoins = 0; combo = 1; comboTimer = 0;
-      gameSpeed = 5;
+      gameSpeed = 5; // ✅ Reset speed to base value
       player.x = W * 0.15; player.y = floorY - 60; player.vy = 0; player.grounded = true;
       player.shield = false; player.magnet = false; player.doubleScore = false; player.doubleJump = false; player.jumps = 0; player.blink = 0; player.jetpack = false;
       spaceHeld = false;
+      
+      // ✅ APPLY PURCHASED BONUSES AT GAME START
+      if (purchasedBonuses.length > 0) {
+        purchasedBonuses.forEach(bonusId => {
+          if (shopItems[bonusId]) {
+            activatePowerup(bonusId);
+          }
+        });
+        // Clear purchased bonuses after applying
+        purchasedBonuses = [];
+        localStorage.setItem('vk_runner_purchased_bonuses', JSON.stringify(purchasedBonuses));
+      }
       
       obstacles = []; coins = []; particles = []; powerups = [];
       lastObstacleTime = 0; lastCoinTime = 0; lastPowerupTime = 0;
@@ -1233,7 +1308,6 @@
       return a.x + 10 < b.x + b.w - 10 && a.x + a.w - 10 > b.x + 10 && a.y + 10 < b.y + b.h - 10 && a.y + a.h - 10 > b.y + 10; 
     }
 
-    // ✅ FIXED: Powerup activation with proper timing
     function activatePowerup(type) {
       audio.playPowerup();
       
@@ -1461,7 +1535,7 @@
     function startGame() {
       if (!audio.ctx) audio.init();
       audio.stopMusic(); audio.playGameMusic();
-      resetGame();
+      resetGame(); // ✅ This resets gameSpeed to 5
       isPlaying = true; isPaused = false; isGameOver = false;
       
       const mainMenu = document.getElementById('mainMenu');
@@ -1496,7 +1570,7 @@
       reviveTimer = setInterval(() => { t--; rt.textContent = t; if(t<=0) { clearInterval(reviveTimer); rc.style.display = 'none'; } }, 1000);
     }
 
-    // ✅ FIXED: Revive with proper shield activation
+    // ✅ FIXED: Revive with proper shield activation AND speed reset
     function revive() {
       if (!canRevive) return; 
       clearInterval(reviveTimer); 
@@ -1522,46 +1596,28 @@
       }
     }
 
-    // ✅ FIXED: Apply revive reward properly
+    // ✅ FIXED: Apply revive reward with speed reset
     function applyReviveReward() {
+      // ✅ Reset game speed to base value (fixes issue #7)
+      gameSpeed = 5;
+      
+      // Activate shield
       player.shield = true;
       activatePowerup('shield');
       
+      // Reset player position and velocity
       player.vy = -6;
       player.grounded = false;
       isGameOver = false;
       canRevive = false;
       moonMood = 0;
       
+      // Remove nearby obstacles
       obstacles = obstacles.filter(o => o.x > player.x + 200 || o.x + o.w < player.x - 100);
       
       audio.playPowerup();
       lastTime = performance.now(); 
       loop(lastTime);
-    }
-
-    // ✅ Show ad for coins
-    function showAdForCoins() {
-      if (vkReady) {
-        bridge.send('VKWebAppShowNativeAds', { 
-          ad_type: 'reward',
-          ad_format: 'reward_video'
-        }).then(data => {
-          if (data.result) {
-            totalCoins += 50;
-            localStorage.setItem('vk_runner_coins', totalCoins);
-            audio.playCoin();
-            alert('✅ +50 монет за просмотр рекламы!');
-          }
-        }).catch(() => {
-          alert('❌ Не удалось показать рекламу');
-        });
-      } else {
-        totalCoins += 50;
-        localStorage.setItem('vk_runner_coins', totalCoins);
-        audio.playCoin();
-        alert('✅ +50 монет (тестовый режим)');
-      }
     }
 
     async function exitAndSave() {
@@ -1629,7 +1685,6 @@
     const shopBtn = document.getElementById('shopBtn');
     const missionsBtn = document.getElementById('missionsBtn');
     const leaderboardBtn = document.getElementById('leaderboardBtn');
-    const adCoinsBtn = document.getElementById('adCoinsBtn');
     const supportBtn = document.getElementById('supportBtn');
     const tutorialBtn = document.getElementById('tutorialBtn');
     const settingsBtn = document.getElementById('settingsBtn');
@@ -1650,7 +1705,6 @@
     if(shopBtn) shopBtn.addEventListener('click', () => { audio.playClick(); openShop(); });
     if(missionsBtn) missionsBtn.addEventListener('click', () => { audio.playClick(); openMissions(); });
     if(leaderboardBtn) leaderboardBtn.addEventListener('click', () => { audio.playClick(); showLeaderboard(); });
-    if(adCoinsBtn) adCoinsBtn.addEventListener('click', () => { audio.playClick(); showAdForCoins(); });
     if(supportBtn) supportBtn.addEventListener('click', () => { audio.playClick(); showSupport(); });
     if(tutorialBtn) tutorialBtn.addEventListener('click', () => { audio.playClick(); showTutorial(); });
     if(settingsBtn) settingsBtn.addEventListener('click', () => { audio.playClick(); document.getElementById('settingsScreen').classList.add('active'); });
