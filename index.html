@@ -282,12 +282,12 @@
   <div class="overlay active" id="mainMenu">
     <h1 class="menu-title">🏃 VK Runner Pro</h1>
     <button class="btn btn-primary" id="playBtn">▶ Играть</button>
-    <button class="btn btn-secondary" id="shopBtn">🛒 Магазин бонусов</button>
+    <button class="btn btn-secondary" id="shopBtn">🛒 Магазин</button>
     <button class="btn btn-secondary" id="missionsBtn">📋 Задания</button>
     <button class="btn btn-secondary" id="leaderboardBtn">🏆 Таблица лидеров</button>
     <button class="btn btn-secondary" id="tutorialBtn">❓ Обучение</button>
     <button class="btn btn-secondary" id="supportBtn">💬 Техподдержка</button>
-    <p class="hint">Управление: Пробел / Клик / Тап<br>Удерживай для реактивного ранца 🚀<br>Собирай монеты 💰, избегай препятствий</p>
+    <p class="hint">Управление: Пробел / Клик / Тап<br>Удерживай для реактивного ранца 🚀<br>Собирай монеты 💰, избегай препятствий 🪨</p>
   </div>
 
   <div class="pause-menu" id="pauseMenu">
@@ -313,24 +313,24 @@
     <button class="btn btn-danger" id="exitGameOverBtn">🚪 Выйти</button>
   </div>
 
-<div class="overlay" id="shopScreen" style="position: relative;">
-  <!-- ✅ Крестик закрытия в правом верхнем углу -->
-  <button onclick="closeShop()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,80,80,0.8); border: 2px solid rgba(255,255,255,0.3); color: white; width: 45px; height: 45px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 10;" aria-label="Закрыть магазин">
-    ✕
-  </button>
-  
-  <h2 style="font-size: 2rem;">🛒 Магазин</h2>
-  <div class="menu-stats"><div class="stat-row"><span class="stat-label">💰 Монеты:</span><span class="stat-value" id="shopCoins">0</span></div></div>
-  <div class="shop-grid" id="shopGrid"></div>
-  <hr style="width: 100%; border: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
-  <div style="text-align: center; margin-bottom: 10px; color: #aaa; font-size: 0.85rem;">
-    💎 Купить монеты за голоса ВК
+  <div class="overlay" id="shopScreen" style="position: relative;">
+    <!-- ✅ КРЕСТИК ЗАКРЫТИЯ В ПРАВОМ ВЕРХНЕМ УГЛУ -->
+    <button onclick="closeShop()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,80,80,0.9); border: 2px solid rgba(255,255,255,0.4); color: white; width: 45px; height: 45px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 10; transition: all 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" aria-label="Закрыть магазин">
+      ✕
+    </button>
+    
+    <h2 style="font-size: 2rem;">🛒 Магазин</h2>
+    <div class="menu-stats"><div class="stat-row"><span class="stat-label">💰 Монеты:</span><span class="stat-value" id="shopCoins">0</span></div></div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <hr style="width: 100%; border: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+    <div style="text-align: center; margin-bottom: 10px; color: #aaa; font-size: 0.85rem;">
+      💎 Купить монеты за голоса ВК
+    </div>
+    <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
+      <button class="btn btn-warning" onclick="buyCoins(100, 1)" style="padding: 12px 20px; font-size: 1rem; min-width: 140px;">100 💰 за 1 голос</button>
+      <button class="btn btn-warning" onclick="buyCoins(500, 4)" style="padding: 12px 20px; font-size: 1rem; min-width: 140px;">500 💰 за 4 голоса</button>
+    </div>
   </div>
-  <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
-    <button class="btn btn-warning" onclick="buyCoins(100, 1)" style="padding: 12px 20px; font-size: 1rem; min-width: 140px;">100 💰 за 1 голос</button>
-    <button class="btn btn-warning" onclick="buyCoins(500, 4)" style="padding: 12px 20px; font-size: 1rem; min-width: 140px;">500 💰 за 4 голоса</button>
-  </div>
-</div>
 
   <div class="overlay" id="missionsScreen">
     <h2 style="font-size: 2rem;">📋 Ежедневные задания</h2>
@@ -381,8 +381,8 @@
         <a href="https://vk.com/grishmaster" target="_blank" class="btn btn-primary">
           👤 Страница автора
         </a>
-        <a href="mailto:grisha_parshin@vk.com" class="btn btn-secondary">
-          ✉️ Email: grisha_parshin@vk.com
+        <a href="mailto:support@vkrunner.ru" class="btn btn-secondary">
+          ✉️ Email: support@vkrunner.ru
         </a>
       </div>
     </div>
@@ -402,7 +402,7 @@
       </div>
       <div class="tutorial-step">
         <strong>💰 Цель игры:</strong>
-        <p>Собирай монеты 💰, избегай препятствий и набирай максимум очков!</p>
+        <p>Собирай монеты 💰, избегай препятствий 🪨 и набирай максимум очков!</p>
       </div>
       <div class="tutorial-step">
         <strong>🛒 Магазин:</strong>
@@ -786,7 +786,6 @@
       jetpack: { name: 'Реактивный ранец', icon: '🚀', price: 150, type: 'consumable', duration: 25000 }
     };
 
-    // ✅ Функция применения бонуса СЕЙЧАС (в текущей игре)
     function applyBonusNow(bonusId) {
       if (bonusId === 'magnet') {
         player.magnet = true;
@@ -832,12 +831,10 @@
             localStorage.setItem('vk_runner_coins', totalCoins);
             shopCoinsEl.textContent = totalCoins;
             
-            // ✅ Применяем бонус СЕЙЧАС если игра идет
             if (isPlaying && !isPaused) {
               applyBonusNow(id);
               alert(`✅ ${item.name} активирован!`);
             } else {
-              // Если игра на паузе или в меню - сохраняем для следующей игры
               if (!purchasedBonuses.includes(id)) {
                 purchasedBonuses.push(id);
                 localStorage.setItem('vk_runner_purchased_bonuses', JSON.stringify(purchasedBonuses));
