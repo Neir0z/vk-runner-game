@@ -313,20 +313,22 @@
     <button class="btn btn-danger" id="exitGameOverBtn">🚪 Выйти</button>
   </div>
 
-  <div class="overlay" id="shopScreen">
-    <h2 style="font-size: 2rem;">🛒 Магазин бонусов</h2>
-    <div class="menu-stats"><div class="stat-row"><span class="stat-label">💰 Монеты:</span><span class="stat-value" id="shopCoins">0</span></div></div>
-    <div class="shop-grid" id="shopGrid"></div>
-    <hr style="width: 100%; border: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
-    <div style="text-align: center; margin-bottom: 10px; color: #aaa; font-size: 0.9rem;">
-      💎 Купить монеты за голоса ВК
-    </div>
-    <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
-      <button class="btn btn-warning" onclick="buyCoins(100, 1)">100 💰 за 1 голос</button>
-      <button class="btn btn-warning" onclick="buyCoins(500, 4)">500 💰 за 4 голоса</button>
-    </div>
-    <button class="btn btn-secondary" onclick="closeShop()" style="margin-top: 15px; min-width: 200px;">↩️ Закрыть магазин</button>
+ <div class="overlay" id="shopScreen">
+  <h2 style="font-size: 2rem;">🛒 Магазин</h2>
+  <div class="menu-stats"><div class="stat-row"><span class="stat-label">💰 Монеты:</span><span class="stat-value" id="shopCoins">0</span></div></div>
+  <div class="shop-grid" id="shopGrid"></div>
+  <hr style="width: 100%; border: 1px solid rgba(255,255,255,0.2); margin: 15px 0;">
+  <div style="text-align: center; margin-bottom: 10px; color: #aaa; font-size: 0.85rem;">
+    💎 Купить монеты за голоса ВК
   </div>
+  <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
+    <button class="btn btn-warning" onclick="buyCoins(100, 1)" style="padding: 12px 20px; font-size: 1rem; min-width: auto;">100 💰 за 1 голос</button>
+    <button class="btn btn-warning" onclick="buyCoins(500, 4)" style="padding: 12px 20px; font-size: 1rem; min-width: auto;">500 💰 за 4 голоса</button>
+  </div>
+  <button class="btn btn-secondary" onclick="closeShop()" style="margin-top: 10px; min-width: 150px; padding: 12px 25px; font-size: 1.1rem;">
+    ↩️ Закрыть
+  </button>
+</div>
 
   <div class="overlay" id="missionsScreen">
     <h2 style="font-size: 2rem;">📋 Ежедневные задания</h2>
