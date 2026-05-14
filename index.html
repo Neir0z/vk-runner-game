@@ -9,114 +9,49 @@
   <title>VK Runner Pro</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body {
-      width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, #1e3c72, #2a5298);
-      touch-action: none; -webkit-user-select: none; user-select: none;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #fff;
-    }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: linear-gradient(135deg, #1e3c72, #2a5298); touch-action: none; -webkit-user-select: none; user-select: none; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #fff; }
     canvas { display: block; width: 100%; height: 100%; }
-    
-    .ui {
-      position: absolute; top: 10px; left: 10px; right: 10px;
-      display: flex; justify-content: space-between; align-items: flex-start;
-      pointer-events: none; z-index: 100;
-    }
-    
-    .score-box {
-      background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(30,60,114,0.9));
-      padding: 15px 20px; border-radius: 15px;
-      border: 2px solid rgba(255,215,0,0.5);
-      pointer-events: auto;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px rgba(255,215,0,0.3);
-      backdrop-filter: blur(10px);
-    }
-    
+    .ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; z-index: 100; }
+    .score-box { background: linear-gradient(135deg, rgba(0,0,0,0.9), rgba(30,60,114,0.9)); padding: 15px 20px; border-radius: 15px; border: 2px solid rgba(255,215,0,0.5); pointer-events: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 20px rgba(255,215,0,0.3); backdrop-filter: blur(10px); }
     .score { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
     .coins { font-size: 1.2rem; color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,0.8); }
-    .combo { 
-      font-size: 1.2rem; color: #ff6b6b; font-weight: bold;
-      animation: comboPulse 0.5s ease-out;
-      display: none; text-shadow: 0 0 10px rgba(255,107,107,0.8);
-    }
+    .combo { font-size: 1.2rem; color: #ff6b6b; font-weight: bold; animation: comboPulse 0.5s ease-out; display: none; text-shadow: 0 0 10px rgba(255,107,107,0.8); }
     .combo.show { display: block; }
-    @keyframes comboPulse {
-      0% { transform: scale(1.5); opacity: 0; }
-      50% { transform: scale(1); opacity: 1; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    
+    @keyframes comboPulse { 0% { transform: scale(1.5); opacity: 0; } 50% { transform: scale(1); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
     .controls { display: flex; gap: 10px; pointer-events: auto; }
-    .btn-small {
-      background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1));
-      border: 2px solid rgba(255,255,255,0.5);
-      color: white; padding: 12px 16px; border-radius: 10px; cursor: pointer;
-      font-size: 1.4rem; transition: all 0.2s; min-width: 50px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
+    .btn-small { background: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1)); border: 2px solid rgba(255,255,255,0.5); color: white; padding: 12px 16px; border-radius: 10px; cursor: pointer; font-size: 1.4rem; transition: all 0.2s; min-width: 50px; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     .btn-small:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
     .btn-small:active { transform: scale(0.95); }
     .btn-small.muted { background: rgba(255,80,80,0.6); border-color: rgba(255,80,80,0.9); }
-    
-    .overlay {
-      position: absolute; inset: 0; 
-      background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(30,60,114,0.95));
-      display: none; flex-direction: column; align-items: center; justify-content: center;
-      gap: 20px; z-index: 200; padding: 20px;
-      backdrop-filter: blur(10px);
-    }
+    .overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,0,0,0.95), rgba(30,60,114,0.95)); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 20px; z-index: 200; padding: 20px; backdrop-filter: blur(10px); }
     .overlay.active { display: flex; }
-    .menu-title {
-      font-size: 3rem; font-weight: bold; margin-bottom: 15px;
-      background: linear-gradient(135deg, #ffd700, #ffed4e, #ffd700);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      animation: glow 2s ease-in-out infinite;
-      filter: drop-shadow(0 0 20px rgba(255,215,0,0.8));
-      text-align: center;
-    }
-    @keyframes glow { 
-      0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(255,215,0,0.8)); } 
-      50% { filter: brightness(1.3) drop-shadow(0 0 30px rgba(255,215,0,1)); } 
-    }
-    
-    .btn {
-      padding: 16px 40px; font-size: 1.2rem; border: none; border-radius: 12px;
-      cursor: pointer; transition: all 0.3s; font-weight: bold; min-width: 280px;
-      position: relative; overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    }
+    .menu-title { font-size: 3rem; font-weight: bold; margin-bottom: 15px; background: linear-gradient(135deg, #ffd700, #ffed4e, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: glow 2s ease-in-out infinite; filter: drop-shadow(0 0 20px rgba(255,215,0,0.8)); text-align: center; }
+    @keyframes glow { 0%, 100% { filter: brightness(1) drop-shadow(0 0 20px rgba(255,215,0,0.8)); } 50% { filter: brightness(1.3) drop-shadow(0 0 30px rgba(255,215,0,1)); } }
+    .btn { padding: 16px 40px; font-size: 1.2rem; border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s; font-weight: bold; min-width: 280px; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
     .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
     .btn:active { transform: translateY(-1px); }
-    
     .btn-primary { background: linear-gradient(135deg, #4a76a8, #6b9bd1); color: white; border: 2px solid rgba(255,255,255,0.3); }
     .btn-warning { background: linear-gradient(135deg, #f39c12, #f1c40f); color: #000; border: 2px solid rgba(255,255,255,0.3); }
     .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; border: 2px solid rgba(255,255,255,0.3); }
     .btn-success { background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; border: 2px solid rgba(255,255,255,0.3); }
     .btn-secondary { background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1)); color: white; border: 2px solid rgba(255,255,255,0.4); backdrop-filter: blur(10px); }
-    
     .hint { font-size: 0.95rem; color: #aaa; text-align: center; max-width: 90%; line-height: 1.6; margin-top: 10px; }
     .menu-stats { background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); padding: 25px 35px; border-radius: 12px; margin: 10px 0; text-align: center; border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); }
     .stat-row { display: flex; justify-content: space-between; gap: 40px; margin: 10px 0; font-size: 1.1rem; }
     .stat-label { color: #aaa; }
     .stat-value { color: #ffd700; font-weight: bold; font-size: 1.3rem; }
-    
-    .pause-menu { 
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-      background: linear-gradient(135deg, rgba(0,0,0,0.98), rgba(30,60,114,0.98)); 
-      padding: 40px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.3); 
-      display: none; flex-direction: column; align-items: center; gap: 15px; 
-      z-index: 150; min-width: 300px; backdrop-filter: blur(10px);
-    }
+    .pause-menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(135deg, rgba(0,0,0,0.98), rgba(30,60,114,0.98)); padding: 40px; border-radius: 16px; border: 2px solid rgba(255,255,255,0.3); display: none; flex-direction: column; align-items: center; gap: 15px; z-index: 150; min-width: 300px; backdrop-filter: blur(10px); }
     .pause-menu.active { display: flex; }
-    
+    .save-indicator { position: absolute; bottom: 20px; right: 20px; background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; padding: 12px 18px; border-radius: 10px; font-size: 1rem; display: none; animation: slideIn 0.3s; z-index: 300; }
+    .save-indicator.show { display: block; }
+    @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     .shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0; max-width: 400px; }
     .shop-item { background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05)); border: 3px solid rgba(255,255,255,0.3); border-radius: 12px; padding: 15px; cursor: pointer; transition: all 0.3s; text-align: center; backdrop-filter: blur(10px); }
     .shop-item:hover { transform: scale(1.05); background: rgba(255,255,255,0.2); }
     .shop-item:active { transform: scale(0.98); }
     .shop-item-icon { font-size: 2.5rem; margin-bottom: 10px; }
-    .shop-item-name { font-weight: bold; margin-bottom: 5px; }
-    .shop-item-price { color: #ffd700; font-size: 1.1rem; }
-    
+    .shop-item-name { font-weight: bold; margin-bottom: 5px; font-size: 0.85rem; } /* ✅ Уменьшен шрифт */
+    .shop-item-price { color: #ffd700; font-size: 0.8rem; } /* ✅ Уменьшен шрифт */
     .mission-item { background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); padding: 15px; border-radius: 10px; margin: 10px 0; width: 100%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); }
     .mission-info { text-align: left; flex: 1; }
     .mission-title { font-weight: bold; margin-bottom: 5px; }
@@ -127,10 +62,8 @@
     .revive-container { text-align: center; margin: 20px 0; }
     .revive-timer { font-size: 2rem; color: #e74c3c; margin: 10px 0; animation: pulse 1s infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.95); } }
-    
     .record-flash { position: absolute; inset: 0; background: radial-gradient(circle, rgba(255,215,0,0.5) 0%, rgba(255,215,0,0) 70%); pointer-events: none; display: none; z-index: 50; animation: flashAnim 1s ease-out; }
     @keyframes flashAnim { from { opacity: 1; } to { opacity: 0; } }
-
     .leaderboard { background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05)); padding: 20px; border-radius: 12px; margin: 10px 0; border: 2px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); max-width: 400px; width: 100%; }
     .leaderboard-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; color: #ffd700; text-align: center; }
     .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 5px 0; background: rgba(255,255,255,0.1); border-radius: 8px; }
@@ -140,16 +73,13 @@
     .leaderboard-info { flex: 1; display: flex; align-items: center; }
     .leaderboard-name { font-weight: bold; margin-left: 10px; }
     .leaderboard-score { font-weight: bold; color: #2ecc71; margin-left: 10px; }
-    
     .tutorial-step { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin: 10px 0; text-align: left; }
     .tutorial-step strong { color: #ffd700; display: block; margin-bottom: 10px; }
   </style>
 </head>
 <body>
-
   <canvas id="game"></canvas>
   <div class="record-flash" id="recordFlash"></div>
-
   <div class="ui" id="gameUI" style="display: none;">
     <div class="score-box">
       <div class="score">🏆 <span id="score">0</span></div>
@@ -162,25 +92,22 @@
       <button class="btn-small" id="exitBtn">🚪</button>
     </div>
   </div>
-
   <div class="overlay active" id="mainMenu">
     <h1 class="menu-title">🏃 VK Runner Pro</h1>
-    <button class="btn btn-primary" id="playBtn" onclick="startGame()">▶ Играть</button>
-    <button class="btn btn-secondary" id="shopBtn" onclick="openShop()">🛒 Магазин</button>
-    <button class="btn btn-secondary" id="missionsBtn" onclick="openMissions()">📋 Задания</button>
-    <button class="btn btn-secondary" id="leaderboardBtn" onclick="showLeaderboard()">🏆 Таблица лидеров</button>
-    <button class="btn btn-secondary" id="tutorialBtn" onclick="showTutorial()">❓ Обучение</button>
-    <button class="btn btn-secondary" id="supportBtn" onclick="showSupport()">💬 Техподдержка</button>
+    <button class="btn btn-primary" onclick="startGame()">▶ Играть</button>
+    <button class="btn btn-secondary" onclick="openShop()">🛒 Магазин</button>
+    <button class="btn btn-secondary" onclick="openMissions()">📋 Задания</button>
+    <button class="btn btn-secondary" onclick="showLeaderboard()">🏆 Таблица лидеров</button>
+    <button class="btn btn-secondary" onclick="showTutorial()">❓ Обучение</button>
+    <button class="btn btn-secondary" onclick="showSupport()">💬 Техподдержка</button>
     <p class="hint">Управление: Пробел / Клик / Тап<br>Удерживай для реактивного ранца 🚀<br>Собирай монеты 💰, избегай препятствий 🪨</p>
   </div>
-
   <div class="pause-menu" id="pauseMenu">
     <h2 style="font-size: 2rem; margin-bottom: 10px;">⏸ Пауза</h2>
-    <button class="btn btn-primary" id="resumeBtn" onclick="resumeGame()">▶ Продолжить</button>
-    <button class="btn btn-secondary" id="pauseShopBtn" onclick="openShop()">🛒 Магазин</button>
-    <button class="btn btn-secondary" id="menuBtn" onclick="exitAndSave()">🏠 В меню</button>
+    <button class="btn btn-primary" onclick="resumeGame()">▶ Продолжить</button>
+    <button class="btn btn-secondary" onclick="openShop()">🛒 Магазин</button>
+    <button class="btn btn-secondary" onclick="exitAndSave()">🏠 В меню</button>
   </div>
-
   <div class="overlay" id="gameOverScreen">
     <h2 style="font-size: 2.5rem; color: #ff6b6b;">💥 Игра окончена</h2>
     <div class="menu-stats">
@@ -190,14 +117,12 @@
     </div>
     <div class="revive-container" id="reviveContainer" style="display: none;">
       <p style="font-size: 1.2rem; margin-bottom: 10px;">Продолжить?</p>
-      <button class="btn btn-success" id="reviveBtn" onclick="revive()">📺 Смотреть рекламу (+Щит)</button>
+      <button class="btn btn-success" onclick="revive()">📺 Смотреть рекламу (+Щит)</button>
       <div class="revive-timer" id="reviveTimer">15</div>
     </div>
-    <button class="btn btn-primary" id="restartBtn" onclick="startGame()">🔄 Играть снова</button>
-    <button class="btn btn-danger" id="exitGameOverBtn" onclick="exitAndSave()">🚪 Выйти</button>
+    <button class="btn btn-primary" onclick="startGame()">🔄 Играть снова</button>
+    <button class="btn btn-danger" onclick="exitAndSave()">🚪 Выйти</button>
   </div>
-
-  <!-- ✅ ИСПРАВЛЕНО: Убран style="position: relative", добавлены прямые onclick -->
   <div class="overlay" id="shopScreen">
     <button onclick="closeShop()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,80,80,0.9); border: 2px solid rgba(255,255,255,0.4); color: white; width: 45px; height: 45px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 210;">✕</button>
     <h2 style="font-size: 2rem;">🛒 Магазин</h2>
@@ -210,13 +135,11 @@
       <button class="btn btn-warning" onclick="buyCoins(500, 4)" style="padding: 12px 20px; font-size: 1rem; min-width: 140px;">500 💰 за 4 голоса</button>
     </div>
   </div>
-
   <div class="overlay" id="missionsScreen">
     <h2 style="font-size: 2rem;">📋 Ежедневные задания</h2>
     <div id="missionsList"></div>
     <button class="btn btn-secondary" onclick="closeMissions()">Закрыть</button>
   </div>
-
   <div class="overlay" id="leaderboardScreen">
     <h2 style="font-size: 2rem;">🏆 Таблица лидеров</h2>
     <div class="leaderboard" id="leaderboardContent">
@@ -225,7 +148,6 @@
     </div>
     <button class="btn btn-secondary" onclick="closeLeaderboard()">Закрыть</button>
   </div>
-
   <div class="overlay" id="supportScreen">
     <h2 style="font-size: 2rem;">💬 Техническая поддержка</h2>
     <div class="menu-stats" style="min-width: 300px;">
@@ -237,7 +159,6 @@
     </div>
     <button class="btn btn-secondary" onclick="closeSupport()">Закрыть</button>
   </div>
-
   <div class="overlay" id="tutorialScreen">
     <h2 style="font-size: 2rem;">❓ Как играть</h2>
     <div class="menu-stats" style="min-width: 300px; max-height: 500px; overflow-y: auto;">
@@ -247,7 +168,6 @@
     </div>
     <button class="btn btn-primary" onclick="closeTutorial()">Понятно!</button>
   </div>
-
   <div class="overlay" id="privacyScreen">
     <h2 style="font-size: 2rem;">🔒 Конфиденциальность</h2>
     <div class="menu-stats" style="min-width: 300px; text-align: left; max-height: 400px; overflow-y: auto;">
@@ -260,12 +180,10 @@
       <button class="btn btn-danger" onclick="declinePrivacy()">❌ Отклоняю</button>
     </div>
   </div>
-
   <div class="save-indicator" id="saveIndicator">💾 Сохранено!</div>
 
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <script>
-    // === AUDIO ===
     class AudioSystem {
       constructor() { this.enabled = true; this.musicEnabled = true; this.sfxEnabled = true; this.volume = 0.7; this.ctx = null; this.musicInterval = null; this.noteIndex = 0; this.isMenuMusic = false; this.menuNotes = [261.63, 0, 329.63, 0, 392.00, 0, 523.25, 0]; this.gameNotes = [261.63, 329.63, 392.00, 523.25, 293.66, 349.23, 440.00, 587.33]; }
       init() { if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); return true; } catch(e) { return false; } } return true; }
@@ -285,7 +203,6 @@
     }
     const audio = new AudioSystem();
 
-    // === VK & STATE ===
     const bridge = window.vkBridge; let vkReady = false, vkUserId = null, vkUserPhoto = null, leaderboard = [];
     let highScore = parseInt(localStorage.getItem('vk_runner_hs') || '0');
     let totalCoins = parseInt(localStorage.getItem('vk_runner_coins') || '0');
@@ -313,45 +230,52 @@
     function showLeaderboard() { const list = document.getElementById('leaderboardList'); if (!list) return; list.innerHTML = ''; leaderboard.slice(0, 10).forEach((p, i) => { const item = document.createElement('div'); item.className = 'leaderboard-item' + (p.id === vkUserId ? ' me' : ''); const av = p.photo ? `<div class="leaderboard-avatar"><img src="${p.photo}" onerror="this.parentElement.innerHTML='${p.name.charAt(0)}'"></div>` : `<div class="leaderboard-avatar">${p.name.charAt(0)}</div>`; item.innerHTML = `${av}<div class="leaderboard-info"><span class="leaderboard-pos">#${i+1}</span><span class="leaderboard-name">${p.name}</span></div><span class="leaderboard-score">${p.score}</span>`; list.appendChild(item); }); document.getElementById('leaderboardScreen').classList.add('active'); }
     function closeLeaderboard() { document.getElementById('leaderboardScreen').classList.remove('active'); audio.playClick(); }
 
-    // === SHOP (GLOBAL & SAFE) ===
     const shopItems = { magnet: { name: 'Магнит', icon: '🧲', price: 50 }, shield: { name: 'Щит', icon: '🛡️', price: 50 }, doublejump: { name: '2 Прыжка', icon: '⤴️', price: 100 }, jetpack: { name: 'Ранец', icon: '🚀', price: 150 } };
-    function applyBonusNow(id) { if (id === 'magnet') { player.magnet = true; setTimeout(() => player.magnet = false, 5000); } if (id === 'shield') { player.shield = true; setTimeout(() => player.shield = false, 5000); } if (id === 'doublejump') { player.doubleJump = true; setTimeout(() => player.doubleJump = false, 15000); } if (id === 'jetpack') { player.jetpack = true; audio.playJetpack(); setTimeout(() => player.jetpack = false, 25000); } audio.playPowerup(); }
+    function applyBonusNow(id) { 
+      audio.playPowerup(); 
+      if (id === 'magnet') { player.magnet = true; setTimeout(() => player.magnet = false, 5000); } 
+      if (id === 'shield') { player.shield = true; setTimeout(() => player.shield = false, 5000); } 
+      if (id === 'doublejump') { player.doubleJump = true; setTimeout(() => player.doubleJump = false, 15000); } 
+      if (id === 'jetpack') { player.jetpack = true; audio.playJetpack(); setTimeout(() => player.jetpack = false, 25000); } 
+    }
 
-    // ✅ ЯВНО ГЛОБАЛЬНЫЕ ФУНКЦИИ С ЗАЩИТОЙ
+    // ✅ ИСПРАВЛЕНА ЛОГИКА МАГАЗИНА
     window.openShop = function() {
-      try {
-        const cEl = document.getElementById('shopCoins');
-        const gEl = document.getElementById('shopGrid');
-        const sEl = document.getElementById('shopScreen');
-        if (!cEl || !gEl || !sEl) return;
-        cEl.textContent = totalCoins;
-        gEl.innerHTML = '';
-        Object.keys(shopItems).forEach(id => {
-          const it = shopItems[id];
-          const el = document.createElement('div'); el.className = 'shop-item';
-          el.innerHTML = `<div class="shop-item-icon">${it.icon}</div><div class="shop-item-name">${it.name}</div><div class="shop-item-price">${it.price} 💰</div>`;
-          el.onclick = () => {
-            if (totalCoins >= it.price) {
-              totalCoins -= it.price; localStorage.setItem('vk_runner_coins', totalCoins); cEl.textContent = totalCoins;
-              if (isPlaying && !isPaused) { applyBonusNow(id); alert(`✅ ${it.name} активирован!`); }
-              else { if (!purchasedBonuses.includes(id)) { purchasedBonuses.push(id); localStorage.setItem('vk_runner_purchased_bonuses', JSON.stringify(purchasedBonuses)); } alert(`✅ ${it.name} куплен!`); }
-              openShop();
-            } else { audio.playCrash(); alert('❌ Недостаточно монет!'); }
-          };
-          gEl.appendChild(el);
-        });
-        sEl.classList.add('active');
-        audio.playClick();
-      } catch(e) { console.error('openShop error:', e); }
+      const cEl = document.getElementById('shopCoins');
+      const gEl = document.getElementById('shopGrid');
+      const sEl = document.getElementById('shopScreen');
+      if (!cEl || !gEl || !sEl) return;
+      cEl.textContent = totalCoins; gEl.innerHTML = '';
+      Object.keys(shopItems).forEach(id => {
+        const it = shopItems[id];
+        const el = document.createElement('div'); el.className = 'shop-item';
+        el.innerHTML = `<div class="shop-item-icon">${it.icon}</div><div class="shop-item-name">${it.name}</div><div class="shop-item-price">${it.price} 💰</div>`;
+        el.onclick = () => {
+          if (totalCoins >= it.price) {
+            totalCoins -= it.price;
+            localStorage.setItem('vk_runner_coins', totalCoins);
+            cEl.textContent = totalCoins;
+            // ✅ Всегда применяем бонус сразу
+            applyBonusNow(id);
+            // Если не в игре, сохраним на следующий запуск
+            if (!isPlaying) {
+              if (!purchasedBonuses.includes(id)) {
+                purchasedBonuses.push(id);
+                localStorage.setItem('vk_runner_purchased_bonuses', JSON.stringify(purchasedBonuses));
+              }
+            }
+            alert(`✅ ${it.name} активирован!`);
+          } else {
+            audio.playCrash();
+            alert('❌ Недостаточно монет!');
+          }
+        };
+        gEl.appendChild(el);
+      });
+      sEl.classList.add('active'); audio.playClick();
     };
 
-    window.closeShop = function() {
-      try {
-        const s = document.getElementById('shopScreen');
-        if (s) s.classList.remove('active');
-        audio.playClick();
-      } catch(e) {}
-    };
+    window.closeShop = function() { try { const s = document.getElementById('shopScreen'); if (s) s.classList.remove('active'); audio.playClick(); } catch(e) {} };
 
     window.buyCoins = function(amount, votes) {
       if (!vkReady) { alert('❌ Только в приложении ВК'); return; }
@@ -362,13 +286,11 @@
       }
     };
 
-    // === MISSIONS ===
     function generateDailyMissions() { const t = [{ id: 'run_distance', name: 'Пробеги дистанцию', target: 200, reward: 50, icon: '🏃' }, { id: 'collect_coins', name: 'Собери монеты', target: 30, reward: 40, icon: '💰' }, { id: 'jump_count', name: 'Прыгни', target: 20, reward: 30, icon: '⤴️' }, { id: 'avoid_obstacles', name: 'Избегай препятствий', target: 50, reward: 60, icon: '🪨' }, { id: 'get_combo', name: 'Комбо x3', target: 3, reward: 70, icon: '🔥' }, { id: 'fly_jetpack', name: 'Лети с ранцем', target: 5, reward: 80, icon: '🚀' }]; const s = t.sort(() => 0.5 - Math.random()).slice(0, 3); missions = s.map(m => ({ ...m, current: 0, claimed: false, rewardClaimed: false })); localStorage.setItem('vk_runner_missions', JSON.stringify(missions)); }
     function updateMission(id, val) { const m = missions.find(m => m.id === id); if(m && !m.claimed) { m.current = Math.min(m.current + val, m.target); if(m.current >= m.target) m.claimed = true; localStorage.setItem('vk_runner_missions', JSON.stringify(missions)); } }
     window.openMissions = function() { const l = document.getElementById('missionsList'); if (!l) return; l.innerHTML = ''; missions.forEach(m => { const i = document.createElement('div'); i.className = 'mission-item'; i.innerHTML = `<div class="mission-info"><div class="mission-title">${m.icon||'📋'} ${m.name}</div><div class="mission-progress">${m.current} / ${m.target}</div></div>`; const b = document.createElement('button'); b.className = 'mission-reward' + (m.rewardClaimed ? ' claimed' : ''); b.textContent = m.rewardClaimed ? '✓' : '+' + m.reward + ' 💰'; if(m.claimed && !m.rewardClaimed) { b.onclick = () => { totalCoins += m.reward; m.rewardClaimed = true; localStorage.setItem('vk_runner_coins', totalCoins); localStorage.setItem('vk_runner_missions', JSON.stringify(missions)); openMissions(); audio.playCoin(); }; } else { b.disabled = true; } i.appendChild(b); l.appendChild(i); }); document.getElementById('missionsScreen').classList.add('active'); };
     window.closeMissions = function() { document.getElementById('missionsScreen').classList.remove('active'); audio.playClick(); };
 
-    // === GAME ENGINE ===
     const canvas = document.getElementById('game'); const ctx = canvas.getContext('2d');
     let dpr = window.devicePixelRatio || 1, W, H, floorY;
     function resize() { W = window.innerWidth; H = window.innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); floorY = H * 0.82; }
